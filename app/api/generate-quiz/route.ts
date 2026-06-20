@@ -36,65 +36,24 @@ CONTEÚDO PARA GERAR AS QUESTÕES:
 
 export async function POST(request: Request) {
   try {
-    console.log('📥 1. Recebendo requisição...');
+    console.log('📥 Recebendo requisição...');
     
-    const formData = await request.formData();
-    const modo = formData.get('modo') as string;
+    const body = await request.json();
+    const conteudo = body.conteudo as string;
     
-    let conteudo = '';
-    
-    if (modo === 'texto') {
-      // Modo texto: pega o conteúdo direto
-      conteudo = formData.get('conteudo') as string || '';
-      console.log('📝 2. Modo texto, conteúdo:', conteudo.length, 'caracteres');
-    } else {
-      // Modo PDF: extrai o texto do PDF
-      const file = formData.get('pdf') as File;
-      
-      if (!file) {
-        return NextResponse.json({ erro: 'Nenhum PDF enviado' }, { status: 400 });
-      }
-      
-      console.log('📄 2. Modo PDF, arquivo:', file?.name, file?.size, 'bytes');
-      
-      const buffer = Buffer.from(await file.arrayBuffer());
-      
-      // Tenta extrair texto do PDF
-      try {
-        const uint8Array = new Uint8Array(buffer);
-        const blob = new Blob([uint8Array], { type: 'application/pdf' });
-        const arrayBuffer = await blob.arrayBuffer();
-        const textDecoder = new TextDecoder('utf-8');
-        let text = textDecoder.decode(arrayBuffer);
-        text = text.replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
-        
-        if (text.length < 50) {
-          text = buffer.toString('utf-8').replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
-        }
-        
-        conteudo = text.trim();
-        console.log('📝 Texto extraído do PDF:', conteudo.length, 'caracteres');
-      } catch (erro) {
-        console.error('❌ Erro ao extrair PDF:', erro);
-        return NextResponse.json({ 
-          erro: 'Não foi possível ler o PDF. Tente colar o texto manualmente.' 
-        }, { status: 400 });
-      }
-    }
-
-    // Valida se tem conteúdo
     if (!conteudo || conteudo.length < 50) {
       return NextResponse.json({ 
-        erro: 'Conteúdo muito curto. Digite pelo menos 50 caracteres.' 
+        erro: 'Digite pelo menos 50 caracteres para gerar questões.' 
       }, { status: 400 });
     }
 
+    console.log('📝 Conteúdo recebido:', conteudo.length, 'caracteres');
+
     // Limita o tamanho do texto
-    const textoLimitado = conteudo.slice(0, 10000);
+    const textoLimitado = conteudo.slice(0, 12000);
     const promptCompleto = PROMPT_IA + "\n\n" + textoLimitado;
 
     const apiKey = process.env.DEEPSEEK_API_KEY;
-    console.log('🔑 3. API Key existe?', apiKey ? 'SIM' : 'NÃO');
     
     if (!apiKey) {
       console.error('❌ DEEPSEEK_API_KEY não encontrada!');
@@ -103,7 +62,7 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    console.log('📤 4. Enviando para DeepSeek...');
+    console.log('📤 Enviando para DeepSeek...');
     console.log('📤 Tamanho do prompt:', promptCompleto.length, 'caracteres');
 
     const respostaIA = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -129,7 +88,7 @@ export async function POST(request: Request) {
       })
     });
 
-    console.log('📨 5. Resposta recebida, status:', respostaIA.status);
+    console.log('📨 Resposta recebida, status:', respostaIA.status);
 
     if (!respostaIA.ok) {
       const erroTexto = await respostaIA.text();
@@ -146,7 +105,7 @@ export async function POST(request: Request) {
 
     const dadosIA = await respostaIA.json();
     let conteudoGerado = dadosIA.choices[0].message.content;
-    console.log('📄 6. Conteúdo gerado (primeiros 500 caracteres):');
+    console.log('📄 Conteúdo gerado (primeiros 500 caracteres):');
     console.log(conteudoGerado.substring(0, 500));
 
     // Limpeza do JSON
@@ -160,7 +119,7 @@ export async function POST(request: Request) {
       jsonLimpo = matchJson[0];
     }
     
-    console.log('📄 7. JSON limpo (primeiros 500 caracteres):');
+    console.log('📄 JSON limpo (primeiros 500 caracteres):');
     console.log(jsonLimpo.substring(0, 500));
 
     let questoes;
@@ -169,6 +128,7 @@ export async function POST(request: Request) {
     } catch (erro) {
       console.error('❌ Erro ao parsear JSON:', erro);
       
+      // Tenta recuperar
       try {
         const questoesMatch = jsonLimpo.match(/"questoes"\s*:\s*\[([\s\S]*?)\]/);
         if (questoesMatch) {
@@ -182,7 +142,7 @@ export async function POST(request: Request) {
       
       if (!questoes) {
         return NextResponse.json({ 
-          erro: 'A IA não retornou um formato válido. Tente novamente com um texto menor.' 
+          erro: 'A IA não retornou um formato válido. Tente novamente com um texto diferente.' 
         }, { status: 500 });
       }
     }
@@ -193,7 +153,7 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    console.log('📊 8. Total de questões:', questoes.questoes.length);
+    console.log('📊 Total de questões:', questoes.questoes.length);
 
     let questoesFinais = questoes.questoes;
     let aviso = '';
@@ -208,7 +168,7 @@ export async function POST(request: Request) {
       questoesFinais = questoesFinais.slice(0, 80);
     }
 
-    console.log('✅ 9. Sucesso!', questoesFinais.length, 'questões geradas');
+    console.log('✅ Sucesso!', questoesFinais.length, 'questões geradas');
 
     return NextResponse.json({
       sucesso: true,
