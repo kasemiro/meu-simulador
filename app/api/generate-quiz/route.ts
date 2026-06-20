@@ -1,6 +1,7 @@
 // app/api/generate-quiz/route.ts
 import { NextResponse } from 'next/server';
 
+// PROMPT DA IA PARA GERAR AS QUESTÕES
 const PROMPT_IA = `
 Você é um professor especialista em concursos públicos.
 
@@ -35,14 +36,23 @@ FORMATO DE SAÍDA (use exatamente assim, em JSON):
 CONTEÚDO PARA GERAR AS QUESTÕES:
 `;
 
+// Função para extrair texto de PDF usando APIs nativas
 async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+  // Converte Buffer para Uint8Array (compatível com Blob)
   const uint8Array = new Uint8Array(buffer);
+  
+  // Cria um Blob a partir do Uint8Array
   const blob = new Blob([uint8Array], { type: 'application/pdf' });
   const arrayBuffer = await blob.arrayBuffer();
+  
+  // Tenta ler como texto UTF-8
   const textDecoder = new TextDecoder('utf-8');
   let text = textDecoder.decode(arrayBuffer);
+  
+  // Remove caracteres não imprimíveis
   text = text.replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
   
+  // Se não pegou nada, tenta ler como texto puro (fallback)
   if (text.length < 50) {
     text = buffer.toString('utf-8').replace(/[\x00-\x1F\x7F-\x9F]/g, ' ');
   }
@@ -52,33 +62,46 @@ async function extractTextFromPDF(buffer: Buffer): Promise<string> {
 
 export async function POST(request: Request) {
   try {
+    // 1. RECEBE O PDF DO USUÁRIO
     const formData = await request.formData();
     const file = formData.get('pdf') as File;
     
     if (!file) {
-      return NextResponse.json({ erro: 'Nenhum PDF enviado' }, { status: 400 });
+      return NextResponse.json(
+        { erro: 'Nenhum PDF enviado' },
+        { status: 400 }
+      );
     }
 
+    // 2. CONVERTE O PDF PARA TEXTO
     const buffer = Buffer.from(await file.arrayBuffer());
     let textoExtraido = await extractTextFromPDF(buffer);
     
+    // Verifica se extraiu texto suficiente
     if (!textoExtraido || textoExtraido.length < 50) {
-      return NextResponse.json({ 
-        erro: 'Não foi possível extrair texto do PDF. Verifique se o PDF tem texto selecionável.' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { 
+          erro: 'Não foi possível extrair texto do PDF. Verifique se o PDF tem texto selecionável.' 
+        },
+        { status: 400 }
+      );
     }
 
+    // 3. LIMITA O TAMANHO DO TEXTO (DeepSeek tem limite de tokens)
     const textoLimitado = textoExtraido.slice(0, 15000);
-    const promptCompleto = PROMPT_IA + "\n\n" + textoLimitado;
 
-    // VERIFICA SE A CHAVE EXISTE
+    // 4. VERIFICA SE A CHAVE EXISTE
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
       console.error('❌ DEEPSEEK_API_KEY não encontrada!');
-      return NextResponse.json({ 
-        erro: 'Chave da API DeepSeek não configurada' 
-      }, { status: 500 });
+      return NextResponse.json(
+        { erro: 'Chave da API DeepSeek não configurada' },
+        { status: 500 }
+      );
     }
+
+    // 5. ENVIA PARA A DEEPSEEK
+    const promptCompleto = PROMPT_IA + "\n\n" + textoLimitado;
 
     console.log('📤 Enviando para DeepSeek...');
 
@@ -105,7 +128,7 @@ export async function POST(request: Request) {
       })
     });
 
-    // LOG DETALHADO DO ERRO
+    // 6. VERIFICA SE A RESPOSTA DA IA DEU CERTO
     if (!respostaIA.ok) {
       const erroTexto = await respostaIA.text();
       console.error('❌ Erro DeepSeek:', respostaIA.status, respostaIA.statusText);
@@ -120,29 +143,43 @@ export async function POST(request: Request) {
         mensagemErro = 'Limite de requisições excedido. Tente novamente mais tarde.';
       }
       
-      return NextResponse.json({ erro: mensagemErro }, { status: respostaIA.status });
+      return NextResponse.json(
+        { erro: mensagemErro },
+        { status: respostaIA.status }
+      );
     }
 
     const dadosIA = await respostaIA.json();
     const conteudoGerado = dadosIA.choices[0].message.content;
 
+    // 7. LIMPA E VALIDA O JSON
     let questoes;
     try {
-      const jsonLimpo = conteudoGerado.replace(/```json/g, '').replace(/```/g, '').trim();
+      // Remove formatação markdown se existir
+      const jsonLimpo = conteudoGerado
+        .replace(/```json/g, '')
+        .replace(/```/g, '')
+        .trim();
       questoes = JSON.parse(jsonLimpo);
     } catch (erro) {
       console.error('❌ Erro ao parsear JSON:', erro);
-      return NextResponse.json({ 
-        erro: 'IA retornou formato inválido. Tente novamente.' 
-      }, { status: 500 });
+      console.log('Conteúdo recebido:', conteudoGerado);
+      
+      return NextResponse.json(
+        { erro: 'IA retornou formato inválido. Tente novamente.' },
+        { status: 500 }
+      );
     }
 
+    // 8. VERIFICA SE TEM EXATAMENTE 80 QUESTÕES
     if (!questoes.questoes || questoes.questoes.length !== 80) {
-      return NextResponse.json({
-        erro: `Gerou ${questoes.questoes?.length || 0} questões, mas precisamos de 80`
-      }, { status: 500 });
+      return NextResponse.json(
+        { erro: `Gerou ${questoes.questoes?.length || 0} questões, mas precisamos de 80` },
+        { status: 500 }
+      );
     }
 
+    // 9. RETORNA O SUCESSO
     console.log('✅ Sucesso!', questoes.questoes.length, 'questões geradas');
 
     return NextResponse.json({
@@ -153,6 +190,9 @@ export async function POST(request: Request) {
 
   } catch (erro) {
     console.error('❌ Erro geral:', erro);
-    return NextResponse.json({ erro: 'Erro interno do servidor' }, { status: 500 });
+    return NextResponse.json(
+      { erro: 'Erro interno do servidor' },
+      { status: 500 }
+    );
   }
 }
