@@ -17,6 +17,8 @@ type Questao = {
 
 export default function Home() {
   const [arquivo, setArquivo] = useState<File | null>(null);
+  const [conteudoTexto, setConteudoTexto] = useState('');
+  const [modoEntrada, setModoEntrada] = useState<'texto' | 'pdf'>('texto');
   const [carregando, setCarregando] = useState(false);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
   const [respostas, setRespostas] = useState<Record<number, string>>({});
@@ -24,8 +26,14 @@ export default function Home() {
   const [erro, setErro] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async () => {
-    if (!arquivo) {
+  const handleEnviarConteudo = async () => {
+    // Valida se tem conteúdo
+    if (modoEntrada === 'texto' && !conteudoTexto.trim()) {
+      setErro('Digite ou cole o conteúdo programático!');
+      return;
+    }
+
+    if (modoEntrada === 'pdf' && !arquivo) {
       setErro('Selecione um PDF primeiro!');
       return;
     }
@@ -36,7 +44,16 @@ export default function Home() {
     setMostrarResultado(false);
 
     const formData = new FormData();
-    formData.append('pdf', arquivo);
+    
+    if (modoEntrada === 'texto') {
+      // Modo texto: envia o conteúdo como texto
+      formData.append('conteudo', conteudoTexto);
+      formData.append('modo', 'texto');
+    } else {
+      // Modo PDF: envia o arquivo
+      formData.append('pdf', arquivo!);
+      formData.append('modo', 'pdf');
+    }
 
     try {
       const resposta = await fetch('/api/generate-quiz', {
@@ -51,8 +68,11 @@ export default function Home() {
       }
 
       setQuestoes(dados.questoes);
-      // Reseta respostas
       setRespostas({});
+      
+      if (dados.aviso) {
+        setErro(dados.aviso);
+      }
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
@@ -83,8 +103,7 @@ export default function Home() {
   };
 
   const finalizarProva = () => {
-    // Verifica se respondeu todas
-    if (Object.keys(respostas).length < 80) {
+    if (Object.keys(respostas).length < questoes.length) {
       setErro(`Responda todas as ${questoes.length} questões antes de finalizar!`);
       return;
     }
@@ -99,39 +118,96 @@ export default function Home() {
           📚 Simulador de Concurso Público
         </h1>
 
-        {/* Área de Upload */}
+        {/* Área de Upload/Texto */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">1. Envie o conteúdo programático (PDF)</h2>
+          <h2 className="text-xl font-semibold mb-4">1. Insira o conteúdo programático</h2>
           
-          <div className="flex items-center gap-4 flex-wrap">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={selecionarArquivo}
-              className="hidden"
-            />
+          {/* Seletor de modo */}
+          <div className="flex gap-4 mb-4">
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
+              onClick={() => setModoEntrada('texto')}
+              className={`px-4 py-2 rounded ${
+                modoEntrada === 'texto' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 hover:bg-gray-300'
+              }`}
             >
-              📂 Escolher PDF
+              📝 Colar Texto
             </button>
-            <span className="text-gray-600">
-              {arquivo ? `📄 ${arquivo.name}` : 'Nenhum arquivo selecionado'}
-            </span>
             <button
-              onClick={handleUpload}
-              disabled={carregando || !arquivo}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded disabled:bg-gray-400"
+              onClick={() => setModoEntrada('pdf')}
+              className={`px-4 py-2 rounded ${
+                modoEntrada === 'pdf' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-200 hover:bg-gray-300'
+              }`}
             >
-              {carregando ? '🔄 Gerando questões...' : '🚀 Gerar Simulado'}
+              📄 Upload PDF
             </button>
           </div>
 
+          {/* Modo Texto */}
+          {modoEntrada === 'texto' && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Cole o conteúdo programático (edital, matérias, etc.):
+              </label>
+              <textarea
+                value={conteudoTexto}
+                onChange={(e) => setConteudoTexto(e.target.value)}
+                placeholder="Exemplo: Direito Constitucional: Art. 1º A República Federativa do Brasil...&#10;Direito Administrativo: Art. 37 ..."
+                className="w-full h-64 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={carregando}
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                {conteudoTexto.length} caracteres
+              </p>
+            </div>
+          )}
+
+          {/* Modo PDF */}
+          {modoEntrada === 'pdf' && (
+            <div className="mb-4">
+              <div className="flex items-center gap-4 flex-wrap">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={selecionarArquivo}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
+                  disabled={carregando}
+                >
+                  📂 Escolher PDF
+                </button>
+                <span className="text-gray-600">
+                  {arquivo ? `📄 ${arquivo.name}` : 'Nenhum arquivo selecionado'}
+                </span>
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                ⚠️ PDFs muito grandes podem demorar ou não funcionar. Prefira colar o texto.
+              </p>
+            </div>
+          )}
+
+          <button
+            onClick={handleEnviarConteudo}
+            disabled={carregando}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded disabled:bg-gray-400 text-lg font-semibold"
+          >
+            {carregando ? '🔄 Gerando questões...' : '🚀 Gerar Simulado'}
+          </button>
+
           {erro && (
-            <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              ⚠️ {erro}
+            <div className={`mt-4 p-3 rounded ${
+              erro.includes('apenas') || erro.includes('menos') 
+                ? 'bg-yellow-100 border border-yellow-400 text-yellow-700'
+                : 'bg-red-100 border border-red-400 text-red-700'
+            }`}>
+              {erro.includes('apenas') || erro.includes('menos') ? '⚠️' : '⚠️'} {erro}
             </div>
           )}
         </div>
@@ -220,6 +296,7 @@ export default function Home() {
                 setRespostas({});
                 setMostrarResultado(false);
                 setArquivo(null);
+                setConteudoTexto('');
               }}
               className="mt-6 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
             >
