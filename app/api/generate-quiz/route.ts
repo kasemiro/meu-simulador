@@ -1,6 +1,6 @@
 // app/api/generate-quiz/route.ts
 import { NextResponse } from 'next/server';
-import pdfParse from 'pdf-parse';
+import pdfParse from 'pdf-parse-fixed';
 
 // ESSA É A FUNÇÃO QUE A IA USA PARA GERAR AS QUESTÕES
 const PROMPT_IA = `
@@ -103,13 +103,10 @@ export async function POST(request: Request) {
     // 4. Limpa e valida o JSON
     let questoes;
     try {
-      // Remove qualquer texto antes/depois do JSON
       const jsonLimpo = conteudoGerado.replace(/```json/g, '').replace(/```/g, '').trim();
       questoes = JSON.parse(jsonLimpo);
     } catch (erro) {
       console.error('Erro ao parsear JSON:', erro);
-      console.log('Conteúdo recebido:', conteudoGerado);
-      
       return NextResponse.json(
         { erro: 'IA retornou formato inválido. Tente novamente.' },
         { status: 500 }
