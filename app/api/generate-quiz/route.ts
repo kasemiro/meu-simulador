@@ -36,79 +36,132 @@ CONTEÚDO PARA GERAR AS QUESTÕES:
 
 export async function POST(request: Request) {
   try {
-    console.log('📥 Recebendo requisição...');
+    console.log('📥 ===== INÍCIO DA REQUISIÇÃO =====');
     
-    const body = await request.json();
-    const conteudo = body.conteudo as string;
+    // 1. LER O CORPO DA REQUISIÇÃO
+    let body;
+    try {
+      body = await request.json();
+      console.log('📝 Body recebido:', typeof body);
+    } catch (erro) {
+      console.error('❌ Erro ao ler JSON do body:', erro);
+      return NextResponse.json({ 
+        erro: 'Erro ao ler dados da requisição' 
+      }, { status: 400 });
+    }
+
+    const conteudo = body?.conteudo as string;
+    console.log('📝 Conteúdo recebido:', conteudo?.length || 0, 'caracteres');
     
-    if (!conteudo || conteudo.length < 50) {
+    if (!conteudo) {
+      console.error('❌ Conteúdo vazio');
+      return NextResponse.json({ 
+        erro: 'Nenhum conteúdo enviado' 
+      }, { status: 400 });
+    }
+    
+    if (conteudo.length < 50) {
+      console.error('❌ Conteúdo muito curto:', conteudo.length);
       return NextResponse.json({ 
         erro: 'Digite pelo menos 50 caracteres para gerar questões.' 
       }, { status: 400 });
     }
 
-    console.log('📝 Conteúdo recebido:', conteudo.length, 'caracteres');
-
-    // Limita o tamanho do texto
-    const textoLimitado = conteudo.slice(0, 12000);
-    const promptCompleto = PROMPT_IA + "\n\n" + textoLimitado;
-
+    // 2. VERIFICAR API KEY
     const apiKey = process.env.DEEPSEEK_API_KEY;
+    console.log('🔑 API Key:', apiKey ? `PRESENTE (${apiKey.substring(0, 10)}...)` : 'AUSENTE');
     
     if (!apiKey) {
       console.error('❌ DEEPSEEK_API_KEY não encontrada!');
       return NextResponse.json({ 
-        erro: 'Chave da API DeepSeek não configurada' 
+        erro: 'Chave da API DeepSeek não configurada. Adicione no .env.local' 
       }, { status: 500 });
     }
 
-    console.log('📤 Enviando para DeepSeek...');
+    // 3. PREPARAR O PROMPT
+    const textoLimitado = conteudo.slice(0, 12000);
+    const promptCompleto = PROMPT_IA + "\n\n" + textoLimitado;
     console.log('📤 Tamanho do prompt:', promptCompleto.length, 'caracteres');
 
-    const respostaIA = await fetch('https://api.deepseek.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'deepseek-chat',
-        messages: [
-          {
-            role: 'system',
-            content: 'Você é um assistente que responde APENAS com JSON válido. NUNCA adicione texto antes ou depois do JSON. NUNCA use Markdown.'
-          },
-          {
-            role: 'user',
-            content: promptCompleto
-          }
-        ],
-        temperature: 0.5,
-        max_tokens: 10000
-      })
-    });
+    // 4. CHAMAR A DEEPSEEK
+    console.log('📤 Enviando para DeepSeek...');
+    console.log('📤 URL:', 'https://api.deepseek.com/v1/chat/completions');
+    
+    let respostaIA;
+    try {
+      respostaIA = await fetch('https://api.deepseek.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [
+            {
+              role: 'system',
+              content: 'Você é um assistente que responde APENAS com JSON válido. NUNCA adicione texto antes ou depois do JSON. NUNCA use Markdown.'
+            },
+            {
+              role: 'user',
+              content: promptCompleto
+            }
+          ],
+          temperature: 0.5,
+          max_tokens: 10000
+        })
+      });
+      console.log('📨 Resposta recebida, status:', respostaIA.status);
+    } catch (erro) {
+      console.error('❌ Erro ao chamar DeepSeek:', erro);
+      return NextResponse.json({ 
+        erro: `Erro de rede: ${erro instanceof Error ? erro.message : 'Erro desconhecido'}` 
+      }, { status: 500 });
+    }
 
-    console.log('📨 Resposta recebida, status:', respostaIA.status);
-
+    // 5. TRATAR RESPOSTA DA DEEPSEEK
     if (!respostaIA.ok) {
-      const erroTexto = await respostaIA.text();
-      console.error('❌ Erro DeepSeek:', respostaIA.status);
-      console.error('📄 Detalhe:', erroTexto);
+      let erroTexto;
+      try {
+        erroTexto = await respostaIA.text();
+      } catch (e) {
+        erroTexto = 'Não foi possível ler o erro';
+      }
+      console.error('❌ Erro DeepSeek:', respostaIA.status, erroTexto);
       
       let mensagemErro = 'Erro ao gerar questões com IA';
-      if (respostaIA.status === 401) mensagemErro = 'Chave da API inválida.';
-      if (respostaIA.status === 402) mensagemErro = 'Saldo insuficiente.';
-      if (respostaIA.status === 429) mensagemErro = 'Limite de requisições excedido.';
+      if (respostaIA.status === 401) mensagemErro = 'Chave da API inválida. Verifique sua chave.';
+      if (respostaIA.status === 402) mensagemErro = 'Saldo insuficiente. Adicione crédito.';
+      if (respostaIA.status === 429) mensagemErro = 'Limite de requisições excedido. Tente mais tarde.';
+      if (respostaIA.status === 500) mensagemErro = 'Erro interno da DeepSeek. Tente novamente.';
       
       return NextResponse.json({ erro: mensagemErro }, { status: respostaIA.status });
     }
 
-    const dadosIA = await respostaIA.json();
-    let conteudoGerado = dadosIA.choices[0].message.content;
-    console.log('📄 Conteúdo gerado (primeiros 500 caracteres):');
-    console.log(conteudoGerado.substring(0, 500));
+    // 6. LER O CONTEÚDO GERADO
+    let dadosIA;
+    try {
+      dadosIA = await respostaIA.json();
+      console.log('📄 Resposta da DeepSeek recebida');
+    } catch (erro) {
+      console.error('❌ Erro ao ler resposta da DeepSeek:', erro);
+      return NextResponse.json({ 
+        erro: 'Erro ao ler resposta da IA' 
+      }, { status: 500 });
+    }
 
-    // Limpeza do JSON
+    const conteudoGerado = dadosIA.choices?.[0]?.message?.content;
+    if (!conteudoGerado) {
+      console.error('❌ Conteúdo gerado vazio');
+      return NextResponse.json({ 
+        erro: 'A IA não retornou conteúdo' 
+      }, { status: 500 });
+    }
+    
+    console.log('📄 Conteúdo gerado (primeiros 300 caracteres):');
+    console.log(conteudoGerado.substring(0, 300));
+
+    // 7. LIMPAR O JSON
     let jsonLimpo = conteudoGerado;
     jsonLimpo = jsonLimpo.replace(/```json\s*/g, '');
     jsonLimpo = jsonLimpo.replace(/```\s*/g, '');
@@ -119,14 +172,18 @@ export async function POST(request: Request) {
       jsonLimpo = matchJson[0];
     }
     
-    console.log('📄 JSON limpo (primeiros 500 caracteres):');
-    console.log(jsonLimpo.substring(0, 500));
+    console.log('📄 JSON limpo (primeiros 300 caracteres):');
+    console.log(jsonLimpo.substring(0, 300));
 
+    // 8. PARSEAR O JSON
     let questoes;
     try {
       questoes = JSON.parse(jsonLimpo);
+      console.log('✅ JSON parseado com sucesso');
     } catch (erro) {
       console.error('❌ Erro ao parsear JSON:', erro);
+      console.log('📄 Conteúdo completo que falhou:');
+      console.log(jsonLimpo);
       
       // Tenta recuperar
       try {
@@ -147,7 +204,9 @@ export async function POST(request: Request) {
       }
     }
 
+    // 9. VALIDAR
     if (!questoes.questoes || !Array.isArray(questoes.questoes)) {
+      console.error('❌ Formato inválido - não tem array de questões');
       return NextResponse.json({
         erro: 'A IA não retornou um array de questões.'
       }, { status: 500 });
@@ -168,7 +227,7 @@ export async function POST(request: Request) {
       questoesFinais = questoesFinais.slice(0, 80);
     }
 
-    console.log('✅ Sucesso!', questoesFinais.length, 'questões geradas');
+    console.log('✅ ===== SUCESSO! =====', questoesFinais.length, 'questões geradas');
 
     return NextResponse.json({
       sucesso: true,
@@ -179,6 +238,7 @@ export async function POST(request: Request) {
 
   } catch (erro) {
     console.error('❌ Erro geral:', erro);
+    console.error('❌ Stack trace:', erro instanceof Error ? erro.stack : 'Sem stack');
     return NextResponse.json({ 
       erro: `Erro interno: ${erro instanceof Error ? erro.message : 'Erro desconhecido'}` 
     }, { status: 500 });
