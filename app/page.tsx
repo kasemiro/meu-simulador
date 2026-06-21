@@ -17,6 +17,7 @@ type Questao = {
 
 export default function Home() {
   const [conteudo, setConteudo] = useState('');
+  const [quantidade, setQuantidade] = useState(40); // Padrão: 40 questões
   const [carregando, setCarregando] = useState(false);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
   const [respostas, setRespostas] = useState<Record<number, string>>({});
@@ -47,7 +48,10 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ conteudo: conteudo.trim() })
+        body: JSON.stringify({ 
+          conteudo: conteudo.trim(),
+          quantidade: quantidade // Envia a quantidade escolhida
+        })
       });
 
       const dados = await resposta.json();
@@ -106,7 +110,7 @@ export default function Home() {
           📚 Simulador de Concurso Público
         </h1>
         <p className="text-center text-gray-600 mb-8">
-          Cole o conteúdo do edital ou material de estudo e gere 80 questões personalizadas!
+          Cole o conteúdo do edital ou material de estudo e gere questões personalizadas!
         </p>
 
         {/* Área de texto */}
@@ -123,7 +127,7 @@ export default function Home() {
               value={conteudo}
               onChange={(e) => setConteudo(e.target.value)}
               placeholder="Cole aqui o conteúdo do edital, matérias, leis, etc.&#10;&#10;Exemplo:&#10;Direito Constitucional: Art. 1º A República Federativa do Brasil...&#10;Direito Administrativo: Art. 37 ...&#10;Direito Penal: Art. 121 ..."
-              className="w-full h-80 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
+              className="w-full h-64 p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
               disabled={carregando}
             />
             <div className="flex justify-between mt-2 text-sm text-gray-500">
@@ -140,6 +144,32 @@ export default function Home() {
             </div>
           </div>
 
+          {/* SELETOR DE QUANTIDADE DE QUESTÕES */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Quantidade de questões:
+            </label>
+            <div className="flex gap-4 flex-wrap">
+              {[20, 40, 60, 80].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => setQuantidade(num)}
+                  className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+                    quantidade === num
+                      ? 'bg-blue-600 text-white ring-2 ring-blue-300'
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  }`}
+                  disabled={carregando}
+                >
+                  {num} questões
+                </button>
+              ))}
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              ⚡ Mais questões = mais tempo para gerar (até 1 minuto)
+            </p>
+          </div>
+
           <button
             onClick={handleGerarSimulado}
             disabled={carregando || conteudo.length < 50}
@@ -147,10 +177,10 @@ export default function Home() {
           >
             {carregando ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="animate-spin">⏳</span> Gerando 80 questões...
+                <span className="animate-spin">⏳</span> Gerando {quantidade} questões...
               </span>
             ) : (
-              '🚀 Gerar Simulado'
+              `🚀 Gerar Simulado (${quantidade} questões)`
             )}
           </button>
 
@@ -229,7 +259,7 @@ export default function Home() {
                 {calcularResultado()} / {questoes.length}
               </div>
               <div className="text-xl mt-2">
-                {calcularResultado() >= 60 ? (
+                {calcularResultado() >= Math.round(questoes.length * 0.7) ? (
                   <span className="text-green-600">✅ Aprovado! Continue assim! 🎉</span>
                 ) : (
                   <span className="text-red-600">❌ Continue estudando! Você consegue! 💪</span>
@@ -283,7 +313,7 @@ export default function Home() {
         {/* Rodapé */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>Gerado com ❤️ usando DeepSeek AI</p>
-          <p className="mt-1">Cole o conteúdo e receba 80 questões personalizadas!</p>
+          <p className="mt-1">Cole o conteúdo e receba questões personalizadas!</p>
         </div>
       </div>
     </main>

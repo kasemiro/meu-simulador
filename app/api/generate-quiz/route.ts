@@ -7,8 +7,10 @@ export async function POST(request: Request) {
     
     const body = await request.json();
     const conteudo = body?.conteudo as string;
+    const quantidade = body?.quantidade || 40; // Pega a quantidade ou usa 40 como padrão
     
     console.log('📝 Conteúdo:', conteudo?.length || 0, 'caracteres');
+    console.log('📊 Quantidade solicitada:', quantidade, 'questões');
     
     if (!conteudo || conteudo.length < 50) {
       return NextResponse.json({ 
@@ -23,21 +25,20 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    // ===== PROMPT MELHORADO PARA QUESTÕES DE QUALIDADE =====
+    // ===== PROMPT COM QUANTIDADE DINÂMICA =====
     const PROMPT_QUESTIONS = `
 Você é um professor especialista em concursos públicos.
 
-CRIE 80 QUESTÕES de múltipla escolha sobre o conteúdo abaixo.
+CRIE EXATAMENTE ${quantidade} QUESTÕES de múltipla escolha sobre o conteúdo abaixo.
 
 INSTRUÇÕES DETALHADAS:
 1. Cada questão deve ter 4 alternativas: A, B, C, D
 2. Apenas UMA alternativa deve ser correta
-3. As alternativas incorretas devem ser plausíveis (não podem ser absurdas)
+3. As alternativas incorretas devem ser plausíveis
 4. Dê uma explicação detalhada do porquê a resposta está certa
 5. As questões devem ser desafiadoras (nível médio/difícil)
 6. Use linguagem formal de concurso
 7. Distribua as questões por diferentes tópicos do conteúdo
-8. Evite questões muito óbvias ou repetitivas
 
 RESPONDA APENAS COM JSON. NADA MAIS.
 
@@ -82,7 +83,7 @@ CONTEÚDO PARA CRIAR AS QUESTÕES:
             content: prompt
           }
         ],
-        temperature: 0.8, // Aumentei para mais criatividade
+        temperature: 0.8,
         max_tokens: 16000
       })
     });
@@ -128,7 +129,6 @@ CONTEÚDO PARA CRIAR AS QUESTÕES:
     } catch (erro) {
       console.error('❌ Erro no parse:', erro);
       
-      // Tenta extrair com regex
       try {
         const regexMatch = jsonStr.match(/"questoes"\s*:\s*\[([\s\S]*?)\]/);
         if (regexMatch) {
@@ -163,12 +163,11 @@ CONTEÚDO PARA CRIAR AS QUESTÕES:
     console.log('✅ Questões válidas:', questoesValidas.length);
 
     if (questoesValidas.length === 0) {
-      // Fallback
-      const questoesFallback = gerarQuestoesFallback(conteudo);
+      const questoesFallback = gerarQuestoesFallback(conteudo, quantidade);
       if (questoesFallback.length > 0) {
         return NextResponse.json({
           sucesso: true,
-          questoes: questoesFallback.slice(0, 80),
+          questoes: questoesFallback.slice(0, quantidade),
           total: questoesFallback.length,
           aviso: '⚠️ Geradas questões automáticas.'
         });
@@ -180,10 +179,10 @@ CONTEÚDO PARA CRIAR AS QUESTÕES:
     }
 
     // ===== RETORNA =====
-    const questoesFinais = questoesValidas.slice(0, 80);
+    const questoesFinais = questoesValidas.slice(0, quantidade);
     let aviso = '';
     
-    if (questoesFinais.length < 80) {
+    if (questoesFinais.length < quantidade) {
       aviso = `⚠️ Gerou apenas ${questoesFinais.length} questões. Tente colar mais conteúdo.`;
     }
 
@@ -204,28 +203,20 @@ CONTEÚDO PARA CRIAR AS QUESTÕES:
   }
 }
 
-// ===== FUNÇÃO DE FALLBACK MELHORADA =====
-function gerarQuestoesFallback(conteudo: string): any[] {
+// ===== FUNÇÃO DE FALLBACK =====
+function gerarQuestoesFallback(conteudo: string, quantidade: number): any[] {
   const questoes = [];
-  
-  // Extrai tópicos do conteúdo
-  const topicos = conteudo
-    .split(/[.;,]/)
-    .filter(t => t.trim().length > 30)
-    .map(t => t.trim());
-  
-  const topicosSelecionados = topicos.slice(0, 80);
+  const topicos = conteudo.split(/[.;,]/).filter(t => t.trim().length > 30);
+  const topicosSelecionados = topicos.slice(0, quantidade);
   
   for (let i = 0; i < topicosSelecionados.length; i++) {
-    const topico = topicosSelecionados[i];
+    const topico = topicosSelecionados[i].trim();
     if (topico.length < 20) continue;
     
-    // Cria uma pergunta diferente para cada tópico
     const tiposPergunta = [
       `Qual das seguintes afirmações sobre "${topico.substring(0, 50)}..." está correta?`,
       `De acordo com o conteúdo, o que se pode afirmar sobre "${topico.substring(0, 50)}..."?`,
-      `Sobre "${topico.substring(0, 50)}...", é correto dizer que:`,
-      `Considerando o texto, qual alternativa melhor define "${topico.substring(0, 50)}..."?`
+      `Sobre "${topico.substring(0, 50)}...", é correto dizer que:`
     ];
     
     const pergunta = tiposPergunta[i % tiposPergunta.length];
@@ -239,7 +230,7 @@ function gerarQuestoesFallback(conteudo: string): any[] {
         D: `Todas as afirmações estão corretas`
       },
       correta: 'A',
-      explicacao: `De acordo com o conteúdo: "${topico}". A alternativa A está correta pois reflete o que foi apresentado.`
+      explicacao: `De acordo com o conteúdo: "${topico}". A alternativa A está correta.`
     });
   }
   
