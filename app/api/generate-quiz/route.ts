@@ -23,27 +23,44 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    // ===== PROMPT PARA 80 QUESTÕES =====
-    const PROMPT_80 = `
-Você é um professor de concurso público.
+    // ===== PROMPT MELHORADO PARA QUESTÕES DE QUALIDADE =====
+    const PROMPT_QUESTIONS = `
+Você é um professor especialista em concursos públicos.
 
 CRIE 80 QUESTÕES de múltipla escolha sobre o conteúdo abaixo.
 
-REGRAS:
-- 4 alternativas: A, B, C, D
-- Indique a correta
-- Dê uma explicação breve
+INSTRUÇÕES DETALHADAS:
+1. Cada questão deve ter 4 alternativas: A, B, C, D
+2. Apenas UMA alternativa deve ser correta
+3. As alternativas incorretas devem ser plausíveis (não podem ser absurdas)
+4. Dê uma explicação detalhada do porquê a resposta está certa
+5. As questões devem ser desafiadoras (nível médio/difícil)
+6. Use linguagem formal de concurso
+7. Distribua as questões por diferentes tópicos do conteúdo
+8. Evite questões muito óbvias ou repetitivas
 
 RESPONDA APENAS COM JSON. NADA MAIS.
 
-FORMATO:
-{"questoes":[{"pergunta":"texto","opcoes":{"A":"opcao","B":"opcao","C":"opcao","D":"opcao"},"correta":"A","explicacao":"texto"}]}
+FORMATO EXATO:
+{"questoes":[
+  {
+    "pergunta": "Texto da pergunta?",
+    "opcoes": {
+      "A": "Primeira opção",
+      "B": "Segunda opção",
+      "C": "Terceira opção",
+      "D": "Quarta opção"
+    },
+    "correta": "A",
+    "explicacao": "Explicação detalhada sobre a resposta correta..."
+  }
+]}
 
-CONTEÚDO:
+CONTEÚDO PARA CRIAR AS QUESTÕES:
 `;
 
     const textoLimitado = conteudo.slice(0, 8000);
-    const prompt = PROMPT_80 + "\n\n" + textoLimitado;
+    const prompt = PROMPT_QUESTIONS + "\n\n" + textoLimitado;
 
     console.log('📤 Enviando para DeepSeek...');
 
@@ -58,15 +75,15 @@ CONTEÚDO:
         messages: [
           {
             role: 'system',
-            content: 'Você responde apenas com JSON puro, sem texto adicional.'
+            content: 'Você é um especialista em criar questões de concurso. Responda apenas com JSON puro, sem texto adicional.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 16000 // Aumentei para caber 80 questões
+        temperature: 0.8, // Aumentei para mais criatividade
+        max_tokens: 16000
       })
     });
 
@@ -81,8 +98,8 @@ CONTEÚDO:
     const dadosIA = await respostaIA.json();
     let conteudoGerado = dadosIA.choices[0].message.content;
     
-    console.log('📄 Resposta recebida (primeiros 300 caracteres):');
-    console.log(conteudoGerado.substring(0, 300));
+    console.log('📄 Resposta recebida (primeiros 500 caracteres):');
+    console.log(conteudoGerado.substring(0, 500));
 
     // ===== EXTRAIR JSON =====
     let jsonStr = conteudoGerado
@@ -131,28 +148,29 @@ CONTEÚDO:
     const questoesValidas = questoes.filter((q: any) => {
       return q.pergunta && 
              typeof q.pergunta === 'string' &&
+             q.pergunta.length > 10 &&
              q.opcoes && 
              typeof q.opcoes === 'object' &&
-             q.opcoes.A && 
-             q.opcoes.B && 
-             q.opcoes.C && 
-             q.opcoes.D &&
+             q.opcoes.A && typeof q.opcoes.A === 'string' &&
+             q.opcoes.B && typeof q.opcoes.B === 'string' &&
+             q.opcoes.C && typeof q.opcoes.C === 'string' &&
+             q.opcoes.D && typeof q.opcoes.D === 'string' &&
              q.correta && 
              ['A','B','C','D'].includes(q.correta) &&
-             q.explicacao;
+             q.explicacao && typeof q.explicacao === 'string';
     });
 
     console.log('✅ Questões válidas:', questoesValidas.length);
 
     if (questoesValidas.length === 0) {
-      // Fallback: gera questões genéricas
+      // Fallback
       const questoesFallback = gerarQuestoesFallback(conteudo);
       if (questoesFallback.length > 0) {
         return NextResponse.json({
           sucesso: true,
           questoes: questoesFallback.slice(0, 80),
           total: questoesFallback.length,
-          aviso: '⚠️ Geradas questões automáticas. A IA teve dificuldade.'
+          aviso: '⚠️ Geradas questões automáticas.'
         });
       }
       
@@ -162,7 +180,6 @@ CONTEÚDO:
     }
 
     // ===== RETORNA =====
-    // Pega até 80 questões
     const questoesFinais = questoesValidas.slice(0, 80);
     let aviso = '';
     
@@ -187,26 +204,42 @@ CONTEÚDO:
   }
 }
 
-// ===== FUNÇÃO DE FALLBACK =====
+// ===== FUNÇÃO DE FALLBACK MELHORADA =====
 function gerarQuestoesFallback(conteudo: string): any[] {
   const questoes = [];
-  const topicos = conteudo.split(/[.;,]/).filter(t => t.trim().length > 20);
+  
+  // Extrai tópicos do conteúdo
+  const topicos = conteudo
+    .split(/[.;,]/)
+    .filter(t => t.trim().length > 30)
+    .map(t => t.trim());
+  
   const topicosSelecionados = topicos.slice(0, 80);
   
   for (let i = 0; i < topicosSelecionados.length; i++) {
-    const topico = topicosSelecionados[i].trim();
-    if (topico.length < 10) continue;
+    const topico = topicosSelecionados[i];
+    if (topico.length < 20) continue;
+    
+    // Cria uma pergunta diferente para cada tópico
+    const tiposPergunta = [
+      `Qual das seguintes afirmações sobre "${topico.substring(0, 50)}..." está correta?`,
+      `De acordo com o conteúdo, o que se pode afirmar sobre "${topico.substring(0, 50)}..."?`,
+      `Sobre "${topico.substring(0, 50)}...", é correto dizer que:`,
+      `Considerando o texto, qual alternativa melhor define "${topico.substring(0, 50)}..."?`
+    ];
+    
+    const pergunta = tiposPergunta[i % tiposPergunta.length];
     
     questoes.push({
-      pergunta: `Sobre "${topico.substring(0, 80)}..." qual afirmação está correta?`,
+      pergunta: pergunta,
       opcoes: {
-        A: `A afirmação correta sobre ${topico.substring(0, 30)} é verdadeira`,
-        B: `A afirmação incorreta sobre ${topico.substring(0, 30)} é falsa`,
-        C: `Não há informação suficiente sobre ${topico.substring(0, 30)}`,
-        D: `Todas as alternativas estão corretas`
+        A: `A afirmação sobre ${topico.substring(0, 20)} é verdadeira`,
+        B: `A afirmação sobre ${topico.substring(0, 20)} é falsa`,
+        C: `Não há informações suficientes sobre ${topico.substring(0, 20)}`,
+        D: `Todas as afirmações estão corretas`
       },
       correta: 'A',
-      explicacao: `De acordo com o conteúdo: "${topico}". A alternativa A está correta.`
+      explicacao: `De acordo com o conteúdo: "${topico}". A alternativa A está correta pois reflete o que foi apresentado.`
     });
   }
   
