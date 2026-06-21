@@ -23,28 +23,27 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    // ===== PROMPT SIMPLIFICADO =====
-    // Em vez de pedir 80, pedimos 20 questões por vez (mais fácil de processar)
-    const PROMPT_BASE = `
+    // ===== PROMPT PARA 80 QUESTÕES =====
+    const PROMPT_80 = `
 Você é um professor de concurso público.
 
-Crie 20 questões de múltipla escolha sobre o conteúdo abaixo.
+CRIE 80 QUESTÕES de múltipla escolha sobre o conteúdo abaixo.
 
 REGRAS:
 - 4 alternativas: A, B, C, D
 - Indique a correta
-- Dê uma explicação
+- Dê uma explicação breve
 
 RESPONDA APENAS COM JSON. NADA MAIS.
 
-FORMATO EXATO:
+FORMATO:
 {"questoes":[{"pergunta":"texto","opcoes":{"A":"opcao","B":"opcao","C":"opcao","D":"opcao"},"correta":"A","explicacao":"texto"}]}
 
 CONTEÚDO:
 `;
 
     const textoLimitado = conteudo.slice(0, 8000);
-    const prompt = PROMPT_BASE + "\n\n" + textoLimitado;
+    const prompt = PROMPT_80 + "\n\n" + textoLimitado;
 
     console.log('📤 Enviando para DeepSeek...');
 
@@ -67,7 +66,7 @@ CONTEÚDO:
           }
         ],
         temperature: 0.7,
-        max_tokens: 8000
+        max_tokens: 16000 // Aumentei para caber 80 questões
       })
     });
 
@@ -86,14 +85,12 @@ CONTEÚDO:
     console.log(conteudoGerado.substring(0, 300));
 
     // ===== EXTRAIR JSON =====
-    // Remove tudo que não é JSON
     let jsonStr = conteudoGerado
       .replace(/```json\s*/g, '')
       .replace(/```\s*/g, '')
       .replace(/`/g, '')
       .trim();
     
-    // Encontra o JSON
     const match = jsonStr.match(/\{[\s\S]*\}/);
     if (match) {
       jsonStr = match[0];
@@ -113,8 +110,6 @@ CONTEÚDO:
       }
     } catch (erro) {
       console.error('❌ Erro no parse:', erro);
-      console.log('📄 Conteúdo completo:');
-      console.log(jsonStr);
       
       // Tenta extrair com regex
       try {
@@ -150,27 +145,24 @@ CONTEÚDO:
     console.log('✅ Questões válidas:', questoesValidas.length);
 
     if (questoesValidas.length === 0) {
-      // Se falhou, tenta gerar questões manualmente como fallback
-      console.log('🔄 Tentando fallback...');
-      
-      // Cria questões genéricas baseadas no conteúdo
+      // Fallback: gera questões genéricas
       const questoesFallback = gerarQuestoesFallback(conteudo);
-      
       if (questoesFallback.length > 0) {
         return NextResponse.json({
           sucesso: true,
           questoes: questoesFallback.slice(0, 80),
           total: questoesFallback.length,
-          aviso: '⚠️ Geradas questões de fallback. A IA teve dificuldade, mas criamos questões automaticamente.'
+          aviso: '⚠️ Geradas questões automáticas. A IA teve dificuldade.'
         });
       }
       
       return NextResponse.json({
-        erro: 'Não foi possível gerar questões. Tente um texto diferente ou mais curto.'
+        erro: 'Não foi possível gerar questões. Tente um texto diferente.'
       }, { status: 500 });
     }
 
     // ===== RETORNA =====
+    // Pega até 80 questões
     const questoesFinais = questoesValidas.slice(0, 80);
     let aviso = '';
     
@@ -199,8 +191,6 @@ CONTEÚDO:
 function gerarQuestoesFallback(conteudo: string): any[] {
   const questoes = [];
   const topicos = conteudo.split(/[.;,]/).filter(t => t.trim().length > 20);
-  
-  // Pega os primeiros 80 tópicos
   const topicosSelecionados = topicos.slice(0, 80);
   
   for (let i = 0; i < topicosSelecionados.length; i++) {
@@ -216,7 +206,7 @@ function gerarQuestoesFallback(conteudo: string): any[] {
         D: `Todas as alternativas estão corretas`
       },
       correta: 'A',
-      explicacao: `De acordo com o conteúdo: "${topico}". A alternativa A está correta porque reflete o conteúdo apresentado.`
+      explicacao: `De acordo com o conteúdo: "${topico}". A alternativa A está correta.`
     });
   }
   
