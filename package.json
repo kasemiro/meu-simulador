@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.2",
     "next": "16.2.9",
