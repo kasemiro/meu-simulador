@@ -309,19 +309,18 @@ export default function Home() {
   };
 
   // ============================================================
-  // FUNÇÃO: EXPORTAR PDF
-  // ============================================================
+// FUNÇÃO: EXPORTAR PDF - COM ESPAÇAMENTO CORRIGIDO
+// ============================================================
 
-  /**
+/**
  * exportarPDF
- * Gera um arquivo PDF com o resultado do simulado usando apenas jsPDF
- * Não depende de html2canvas, evitando problemas de renderização
+ * Gera um arquivo PDF com o resultado do simulado
+ * CORREÇÃO: Espaçamento uniforme para todas as alternativas
  */
 const exportarPDF = async () => {
   try {
     setErro('');
     
-    // Cria um novo documento PDF
     const pdf = new jsPDF('p', 'mm', 'a4');
     const pageWidth = 210;
     const pageHeight = 297;
@@ -404,7 +403,6 @@ const exportarPDF = async () => {
       const respostaUsuario = respostas[i] || 'Não respondeu';
       const acertou = respostaUsuario === q.correta;
       
-      // Verifica se cabe na página
       if (y > pageHeight - 50) {
         pdf.addPage();
         y = margin;
@@ -416,7 +414,7 @@ const exportarPDF = async () => {
       pdf.text(`Questão ${i + 1}`, margin, y);
       y += 6;
       
-      // Enunciado - remove emojis
+      // Enunciado
       let perguntaLimpa = q.pergunta
         .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
         .replace(/\s+/g, ' ')
@@ -428,27 +426,34 @@ const exportarPDF = async () => {
       pdf.text(perguntaLines, margin, y);
       y += perguntaLines.length * 5 + 4;
       
-      // Alternativas
+      // ===== ALTERNATIVAS - ESPAÇAMENTO UNIFORME =====
       pdf.setFontSize(10);
+      
+      // IMPORTANTE: Define a fonte como 'normal' para todas as alternativas
+      // para manter o espaçamento uniforme entre os caracteres.
+      // A cor e o negrito serão aplicados sem afetar o espaçamento.
       pdf.setFont('helvetica', 'normal');
+      
       const alternativas = ['A', 'B', 'C', 'D'];
       for (const letra of alternativas) {
         const texto = `${letra}) ${q.opcoes[letra as keyof typeof q.opcoes]}`;
         const isCorreta = letra === q.correta;
         const isMarcada = respostaUsuario === letra;
         
-        // Define estilo
+        // ===== APLICA CORES SEM AFETAR ESPAÇAMENTO =====
+        // Mantém a fonte como 'normal' para todas as alternativas
+        // Isso garante que o espaçamento entre caracteres seja o mesmo
+        pdf.setFont('helvetica', 'normal');
+        
         if (isCorreta) {
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(0, 150, 0);
+          pdf.setTextColor(0, 150, 0);        // Verde para correta
         } else if (isMarcada && !isCorreta) {
-          pdf.setFont('helvetica', 'bold');
-          pdf.setTextColor(200, 0, 0);
+          pdf.setTextColor(200, 0, 0);        // Vermelho para errada
         } else {
-          pdf.setFont('helvetica', 'normal');
-          pdf.setTextColor(0, 0, 0);
+          pdf.setTextColor(0, 0, 0);          // Preto para normal
         }
         
+        // Prefixos visuais
         let prefixo = '';
         if (isCorreta) prefixo = '✓ ';
         if (isMarcada && !isCorreta) prefixo = '✗ ';
@@ -462,14 +467,14 @@ const exportarPDF = async () => {
       pdf.setTextColor(0, 0, 0);
       y += 2;
       
-      // Correta
+      // ===== CORRETA =====
       pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('helvetica', 'normal');     // Mantém normal para espaçamento uniforme
       pdf.setTextColor(0, 150, 0);
       pdf.text(`Correta: ${q.correta}`, margin, y);
       y += 5;
       
-      // Explicação
+      // ===== EXPLICAÇÃO =====
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'italic');
       pdf.setTextColor(80, 80, 80);
@@ -483,8 +488,8 @@ const exportarPDF = async () => {
       pdf.text(explicacaoLines, margin + 4, y);
       y += explicacaoLines.length * 4 + 4;
       
-      // Sua resposta
-      pdf.setFont('helvetica', 'normal');
+      // ===== SUA RESPOSTA =====
+      pdf.setFont('helvetica', 'normal');     // Mantém normal
       pdf.setFontSize(9);
       const acertouText = acertou ? 'Acertou!' : 'Errou!';
       
@@ -507,10 +512,7 @@ const exportarPDF = async () => {
       }
     }
     
-    // Adiciona rodapé
     addFooter();
-    
-    // Salva o PDF
     pdf.save('simulado.pdf');
     
   } catch (error) {
