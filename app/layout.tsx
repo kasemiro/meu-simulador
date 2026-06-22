@@ -6,8 +6,8 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Simulador de Concurso com IA',
-  description: 'Simulador de concurso público com inteligência artificial',
+  title: 'Questões para Estudos',
+  description: 'Simulador de Provas questões geradas por inteligência artificial',
 };
 
 export default function RootLayout({
