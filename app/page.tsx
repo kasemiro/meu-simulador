@@ -255,12 +255,12 @@ export default function Home() {
       // ===== CABEÇALHO =====
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
+      pdf.text('Simulador de Estudos', pageWidth / 2, y, { align: 'center' });
       y += 8;
       
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Gerado por IA com DeepSeek', pageWidth / 2, y, { align: 'center' });
+      pdf.text('Desenvilvido por @Kasemiro', pageWidth / 2, y, { align: 'center' });
       y += 10;
       
       pdf.setDrawColor(200, 200, 200);
