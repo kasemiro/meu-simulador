@@ -1,44 +1,34 @@
 // ============================================================
 // ARQUIVO: app/page.tsx
 // DESCRIÇÃO: Página principal do Simulador de Concurso com IA
-// FUNCIONALIDADES: Categorias, geração de questões, modo escuro, PDF, etc.
 // ============================================================
 
 'use client';
 
-// ============================================================
-// IMPORTAÇÕES
-// ============================================================
-import { useState, useEffect } from 'react';        // Gerenciamento de estado e efeitos
-import Image from 'next/image';                      // Componente de imagem otimizado do Next
-import jsPDF from 'jspdf';                           // Biblioteca para gerar PDF
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import jsPDF from 'jspdf';
 
 // ============================================================
 // TIPOS (TypeScript)
 // ============================================================
 
-/** Estrutura de uma questão gerada pela IA */
 type Questao = {
-  pergunta: string;                                 // Enunciado da questão
-  opcoes: {                                          // Alternativas
+  pergunta: string;
+  opcoes: {
     A: string;
     B: string;
     C: string;
     D: string;
   };
-  correta: string;                                  // Alternativa correta (A, B, C ou D)
-  explicacao: string;                               // Explicação da resposta
+  correta: string;
+  explicacao: string;
 };
 
 // ============================================================
 // CATEGORIAS COM CONTEÚDO PRÉ-DEFINIDO
 // ============================================================
 
-/** 
- * Array de categorias disponíveis para o usuário.
- * Cada categoria tem um nome e um conteúdo pré-definido.
- * A opção "✍️ Escrever meu próprio conteúdo" permite entrada personalizada.
- */
 const CATEGORIAS = [
   {
     nome: '📚 Língua Portuguesa',
@@ -114,39 +104,31 @@ const CATEGORIAS = [
   },
   {
     nome: '✍️ Escrever meu próprio conteúdo',
-    conteudo: null                                          // Conteúdo será inserido pelo usuário
+    conteudo: null
   }
 ];
-
-// ============================================================
-// COMPONENTE PRINCIPAL
-// ============================================================
 
 export default function Home() {
   // ============================================================
   // ESTADOS (STATES)
   // ============================================================
 
-  const [conteudo, setConteudo] = useState('');               // Texto digitado pelo usuário
-  const [quantidade, setQuantidade] = useState(40);           // Número de questões (20, 40, 60, 80)
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState(''); // Categoria escolhida
-  const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto'>('categoria'); // Modo de entrada
-  const [carregando, setCarregando] = useState(false);       // Estado de carregamento
-  const [questoes, setQuestoes] = useState<Questao[]>([]);   // Lista de questões geradas
-  const [respostas, setRespostas] = useState<Record<number, string>>({}); // Respostas do usuário
-  const [mostrarResultado, setMostrarResultado] = useState(false); // Mostrar resultado
-  const [erro, setErro] = useState('');                      // Mensagem de erro
-  const [aviso, setAviso] = useState('');                    // Mensagem de aviso
-  const [darkMode, setDarkMode] = useState(false);           // Modo escuro ativado/desativado
+  const [conteudo, setConteudo] = useState('');
+  const [quantidade, setQuantidade] = useState(40);
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
+  const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto'>('categoria');
+  const [carregando, setCarregando] = useState(false);
+  const [questoes, setQuestoes] = useState<Questao[]>([]);
+  const [respostas, setRespostas] = useState<Record<number, string>>({});
+  const [mostrarResultado, setMostrarResultado] = useState(false);
+  const [erro, setErro] = useState('');
+  const [aviso, setAviso] = useState('');
+  const [darkMode, setDarkMode] = useState(false);
 
   // ============================================================
   // EFEITOS (useEffect) - DARK MODE
   // ============================================================
 
-  /**
-   * useEffect: Carrega a preferência de dark mode do localStorage
-   * Executado apenas uma vez quando o componente monta
-   */
   useEffect(() => {
     const saved = localStorage.getItem('darkMode');
     if (saved) {
@@ -154,11 +136,6 @@ export default function Home() {
     }
   }, []);
 
-  /**
-   * useEffect: Salva a preferência de dark mode no localStorage
-   * e aplica/remove a classe 'dark' no HTML
-   * Executado sempre que darkMode muda
-   */
   useEffect(() => {
     localStorage.setItem('darkMode', String(darkMode));
     if (darkMode) {
@@ -172,18 +149,9 @@ export default function Home() {
   // FUNÇÃO: GERAR SIMULADO
   // ============================================================
 
-  /**
-   * handleGerarSimulado
-   * Função principal que:
-   * 1. Valida se há conteúdo (categoria ou texto)
-   * 2. Envia para a API /api/generate-quiz
-   * 3. Recebe as questões geradas pela IA
-   * 4. Atualiza o estado com as questões
-   */
   const handleGerarSimulado = async () => {
     let textoParaEnviar = '';
 
-    // Determina o conteúdo a ser enviado baseado no modo de entrada
     if (modoEntrada === 'categoria') {
       const categoria = CATEGORIAS.find(c => c.nome === categoriaSelecionada);
       if (!categoria || !categoria.conteudo) {
@@ -203,7 +171,6 @@ export default function Home() {
       textoParaEnviar = conteudo.trim();
     }
 
-    // Reseta estados e inicia carregamento
     setCarregando(true);
     setErro('');
     setAviso('');
@@ -212,7 +179,6 @@ export default function Home() {
     setMostrarResultado(false);
 
     try {
-      // Faz a requisição para a API
       const resposta = await fetch('/api/generate-quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -228,7 +194,6 @@ export default function Home() {
         throw new Error(dados.erro || 'Erro ao gerar questões');
       }
 
-      // Atualiza o estado com as questões recebidas
       setQuestoes(dados.questoes);
       setRespostas({});
       if (dados.aviso) setAviso(dados.aviso);
@@ -243,12 +208,6 @@ export default function Home() {
   // FUNÇÃO: RESPONDER QUESTÃO
   // ============================================================
 
-  /**
-   * responderQuestao
-   * Registra a resposta do usuário para uma questão específica
-   * @param indice - Índice da questão no array
-   * @param opcao - Letra da alternativa escolhida (A, B, C, D)
-   */
   const responderQuestao = (indice: number, opcao: string) => {
     setRespostas(prev => ({ ...prev, [indice]: opcao }));
   };
@@ -257,11 +216,6 @@ export default function Home() {
   // FUNÇÃO: CALCULAR RESULTADO
   // ============================================================
 
-  /**
-   * calcularResultado
-   * Compara as respostas do usuário com o gabarito
-   * @returns Número de acertos
-   */
   const calcularResultado = () => {
     let acertos = 0;
     questoes.forEach((q, i) => {
@@ -274,10 +228,6 @@ export default function Home() {
   // FUNÇÃO: FINALIZAR PROVA
   // ============================================================
 
-  /**
-   * finalizarProva
-   * Verifica se todas as questões foram respondidas e mostra o resultado
-   */
   const finalizarProva = () => {
     const totalQuestoes = questoes.length;
     const respondidas = Object.keys(respostas).length;
@@ -295,10 +245,6 @@ export default function Home() {
   // FUNÇÃO: REINICIAR
   // ============================================================
 
-  /**
-   * reiniciar
-   * Reseta todos os estados para iniciar um novo simulado
-   */
   const reiniciar = () => {
     setQuestoes([]);
     setRespostas({});
@@ -309,29 +255,193 @@ export default function Home() {
   };
 
   // ============================================================
-// FUNÇÃO: EXPORTAR PDF - COM ESPAÇAMENTO CORRIGIDO
-// ============================================================
+  // FUNÇÃO: EXPORTAR PDF - CORRIGIDA
+  // ============================================================
 
-/**
- * exportarPDF
- * Gera um arquivo PDF com o resultado do simulado
- * CORREÇÃO: Espaçamento uniforme para todas as alternativas
- */
-const exportarPDF = async () => {
-  try {
-    setErro('');
+  const exportarPDF = () => {
+    console.log('🟢 Botão Exportar PDF clicado');
     
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 20;
-    const contentWidth = pageWidth - (margin * 2);
-    let y = margin;
-    
-    /**
-     * addFooter - Adiciona rodapé em todas as páginas
-     */
-    const addFooter = () => {
+    try {
+      // Verifica se há questões
+      if (!questoes || questoes.length === 0) {
+        console.log('🔴 Nenhuma questão encontrada');
+        setErro('Nenhuma questão para exportar.');
+        return;
+      }
+      
+      console.log('🟢 Questões:', questoes.length);
+      
+      // Verifica se há respostas
+      const respostasKeys = Object.keys(respostas);
+      console.log('🟢 Respostas:', respostasKeys.length);
+      
+      // Cria o PDF
+      console.log('🟢 Criando PDF...');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+      let y = margin;
+      
+      // ===== CABEÇALHO =====
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
+      y += 8;
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Gerado por IA com DeepSeek', pageWidth / 2, y, { align: 'center' });
+      y += 10;
+      
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, y, pageWidth - margin, y);
+      y += 10;
+      
+      // ===== RESULTADO =====
+      const acertos = calcularResultado();
+      const total = questoes.length;
+      const percentual = total > 0 ? Math.round((acertos / total) * 100) : 0;
+      
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('RESULTADO FINAL', pageWidth / 2, y, { align: 'center' });
+      y += 8;
+      
+      pdf.setFontSize(22);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${acertos} / ${total}`, pageWidth / 2, y, { align: 'center' });
+      y += 8;
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`${percentual}% de acertos`, pageWidth / 2, y, { align: 'center' });
+      y += 6;
+      
+      const status = percentual >= 70 ? 'APROVADO!' : 'Continue estudando!';
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(status, pageWidth / 2, y, { align: 'center' });
+      y += 12;
+      
+      pdf.line(margin, y, pageWidth - margin, y);
+      y += 10;
+      
+      // ===== GABARITO =====
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
+      y += 10;
+      
+      // ===== PERCORRE TODAS AS QUESTÕES =====
+      console.log('🟢 Processando questões...');
+      for (let i = 0; i < questoes.length; i++) {
+        const q = questoes[i];
+        const respostaUsuario = respostas[i] || 'Não respondeu';
+        const acertou = respostaUsuario === q.correta;
+        
+        // Verifica se cabe na página
+        if (y > pageHeight - 50) {
+          pdf.addPage();
+          y = margin;
+        }
+        
+        // Número da questão
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.text(`Questão ${i + 1}`, margin, y);
+        y += 6;
+        
+        // Enunciado
+        let perguntaLimpa = q.pergunta
+          .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        const perguntaLines = pdf.splitTextToSize(perguntaLimpa, contentWidth);
+        pdf.text(perguntaLines, margin, y);
+        y += perguntaLines.length * 5 + 4;
+        
+        // Alternativas
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        const alternativas = ['A', 'B', 'C', 'D'];
+        for (const letra of alternativas) {
+          const texto = `${letra}) ${q.opcoes[letra as keyof typeof q.opcoes]}`;
+          const isCorreta = letra === q.correta;
+          const isMarcada = respostaUsuario === letra;
+          
+          // Define cores
+          if (isCorreta) {
+            pdf.setTextColor(0, 150, 0);
+          } else if (isMarcada && !isCorreta) {
+            pdf.setTextColor(200, 0, 0);
+          } else {
+            pdf.setTextColor(0, 0, 0);
+          }
+          
+          let prefixo = '';
+          if (isCorreta) prefixo = '✓ ';
+          if (isMarcada && !isCorreta) prefixo = '✗ ';
+          
+          const lineText = prefixo + texto;
+          const lines = pdf.splitTextToSize(lineText, contentWidth - 4);
+          pdf.text(lines, margin + 4, y);
+          y += lines.length * 5 + 1;
+        }
+        
+        pdf.setTextColor(0, 0, 0);
+        y += 2;
+        
+        // Correta
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(0, 150, 0);
+        pdf.text(`Correta: ${q.correta}`, margin, y);
+        y += 5;
+        
+        // Explicação
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(80, 80, 80);
+        
+        let explicacaoLimpa = q.explicacao
+          .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        const explicacaoLines = pdf.splitTextToSize(explicacaoLimpa, contentWidth - 4);
+        pdf.text(explicacaoLines, margin + 4, y);
+        y += explicacaoLines.length * 4 + 4;
+        
+        // Sua resposta
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(9);
+        const acertouText = acertou ? 'Acertou!' : 'Errou!';
+        
+        if (acertou) {
+          pdf.setTextColor(0, 150, 0);
+        } else {
+          pdf.setTextColor(200, 0, 0);
+        }
+        
+        pdf.text(`Sua resposta: ${respostaUsuario} - ${acertouText}`, margin, y);
+        y += 8;
+        
+        pdf.setTextColor(0, 0, 0);
+        
+        // Linha separadora
+        if (i < questoes.length - 1) {
+          pdf.setDrawColor(220, 220, 220);
+          pdf.line(margin, y, pageWidth - margin, y);
+          y += 6;
+        }
+      }
+      
+      // ===== RODAPÉ =====
+      console.log('🟢 Adicionando rodapé...');
       const totalPages = pdf.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
@@ -346,186 +456,22 @@ const exportarPDF = async () => {
         );
         pdf.setTextColor(0, 0, 0);
       }
-    };
-    
-    // ===== CABEÇALHO =====
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
-    y += 8;
-    
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Gerado por IA com DeepSeek', pageWidth / 2, y, { align: 'center' });
-    y += 10;
-    
-    pdf.setDrawColor(200, 200, 200);
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 10;
-    
-    // ===== RESULTADO =====
-    const acertos = calcularResultado();
-    const total = questoes.length;
-    const percentual = total > 0 ? Math.round((acertos / total) * 100) : 0;
-    
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('RESULTADO FINAL', pageWidth / 2, y, { align: 'center' });
-    y += 8;
-    
-    pdf.setFontSize(22);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(`${acertos} / ${total}`, pageWidth / 2, y, { align: 'center' });
-    y += 8;
-    
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`${percentual}% de acertos`, pageWidth / 2, y, { align: 'center' });
-    y += 6;
-    
-    const status = percentual >= 70 ? 'APROVADO!' : 'Continue estudando!';
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(status, pageWidth / 2, y, { align: 'center' });
-    y += 12;
-    
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 10;
-    
-    // ===== GABARITO =====
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
-    y += 10;
-    
-    // ===== PERCORRE TODAS AS QUESTÕES =====
-    for (let i = 0; i < questoes.length; i++) {
-      const q = questoes[i];
-      const respostaUsuario = respostas[i] || 'Não respondeu';
-      const acertou = respostaUsuario === q.correta;
       
-      if (y > pageHeight - 50) {
-        pdf.addPage();
-        y = margin;
-      }
+      // ===== SALVA O PDF =====
+      console.log('🟢 Salvando PDF...');
+      pdf.save('simulado.pdf');
+      console.log('✅ PDF salvo com sucesso!');
       
-      // Número da questão
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`Questão ${i + 1}`, margin, y);
-      y += 6;
-      
-      // Enunciado
-      let perguntaLimpa = q.pergunta
-        .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      const perguntaLines = pdf.splitTextToSize(perguntaLimpa, contentWidth);
-      pdf.text(perguntaLines, margin, y);
-      y += perguntaLines.length * 5 + 4;
-      
-      // ===== ALTERNATIVAS - ESPAÇAMENTO UNIFORME =====
-      pdf.setFontSize(10);
-      
-      // IMPORTANTE: Define a fonte como 'normal' para todas as alternativas
-      // para manter o espaçamento uniforme entre os caracteres.
-      // A cor e o negrito serão aplicados sem afetar o espaçamento.
-      pdf.setFont('helvetica', 'normal');
-      
-      const alternativas = ['A', 'B', 'C', 'D'];
-      for (const letra of alternativas) {
-        const texto = `${letra}) ${q.opcoes[letra as keyof typeof q.opcoes]}`;
-        const isCorreta = letra === q.correta;
-        const isMarcada = respostaUsuario === letra;
-        
-        // ===== APLICA CORES SEM AFETAR ESPAÇAMENTO =====
-        // Mantém a fonte como 'normal' para todas as alternativas
-        // Isso garante que o espaçamento entre caracteres seja o mesmo
-        pdf.setFont('helvetica', 'normal');
-        
-        if (isCorreta) {
-          pdf.setTextColor(0, 150, 0);        // Verde para correta
-        } else if (isMarcada && !isCorreta) {
-          pdf.setTextColor(200, 0, 0);        // Vermelho para errada
-        } else {
-          pdf.setTextColor(0, 0, 0);          // Preto para normal
-        }
-        
-        // Prefixos visuais
-        let prefixo = '';
-        if (isCorreta) prefixo = '✓ ';
-        if (isMarcada && !isCorreta) prefixo = '✗ ';
-        
-        const lineText = prefixo + texto;
-        const lines = pdf.splitTextToSize(lineText, contentWidth - 4);
-        pdf.text(lines, margin + 4, y);
-        y += lines.length * 5 + 1;
-      }
-      
-      pdf.setTextColor(0, 0, 0);
-      y += 2;
-      
-      // ===== CORRETA =====
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');     // Mantém normal para espaçamento uniforme
-      pdf.setTextColor(0, 150, 0);
-      pdf.text(`Correta: ${q.correta}`, margin, y);
-      y += 5;
-      
-      // ===== EXPLICAÇÃO =====
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'italic');
-      pdf.setTextColor(80, 80, 80);
-      
-      let explicacaoLimpa = q.explicacao
-        .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      const explicacaoLines = pdf.splitTextToSize(explicacaoLimpa, contentWidth - 4);
-      pdf.text(explicacaoLines, margin + 4, y);
-      y += explicacaoLines.length * 4 + 4;
-      
-      // ===== SUA RESPOSTA =====
-      pdf.setFont('helvetica', 'normal');     // Mantém normal
-      pdf.setFontSize(9);
-      const acertouText = acertou ? 'Acertou!' : 'Errou!';
-      
-      if (acertou) {
-        pdf.setTextColor(0, 150, 0);
-      } else {
-        pdf.setTextColor(200, 0, 0);
-      }
-      
-      pdf.text(`Sua resposta: ${respostaUsuario} - ${acertouText}`, margin, y);
-      y += 8;
-      
-      pdf.setTextColor(0, 0, 0);
-      
-      // Linha separadora
-      if (i < questoes.length - 1) {
-        pdf.setDrawColor(220, 220, 220);
-        pdf.line(margin, y, pageWidth - margin, y);
-        y += 6;
-      }
+    } catch (error) {
+      console.error('🔴 Erro ao gerar PDF:', error);
+      setErro(`Erro ao gerar PDF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
-    
-    addFooter();
-    pdf.save('simulado.pdf');
-    
-  } catch (error) {
-    console.error('Erro ao gerar PDF:', error);
-    setErro('Erro ao gerar PDF. Tente novamente.');
-  }
-};
+  };
 
   // ============================================================
   // CLASSES CONDICIONAIS - DARK MODE
   // ============================================================
 
-  /** Classes CSS que mudam com base no modo escuro */
   const cardBg = darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white';
   const cardShadow = darkMode ? 'shadow-xl shadow-gray-900/30' : 'shadow-md';
   const inputBg = darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300';
@@ -535,11 +481,6 @@ const exportarPDF = async () => {
   // FUNÇÃO: HANDLE CATEGORIA CHANGE
   // ============================================================
 
-  /**
-   * handleCategoriaChange
-   * Atualiza a categoria selecionada e altera o modo de entrada
-   * Se escolher "Escrever meu próprio conteúdo", muda para modo texto
-   */
   const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const valor = e.target.value;
     setCategoriaSelecionada(valor);
@@ -555,7 +496,6 @@ const exportarPDF = async () => {
   // FUNÇÃO: VERIFICAR TODAS RESPONDIDAS
   // ============================================================
 
-  /** Verifica se todas as questões foram respondidas */
   const todasRespondidas = questoes.length > 0 && Object.keys(respostas).length === questoes.length;
 
   // ============================================================
@@ -571,7 +511,6 @@ const exportarPDF = async () => {
       <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
           
-          {/* Logo e título */}
           <div className="flex items-center gap-3">
             <div className="relative w-10 h-10">
               <Image
@@ -581,19 +520,18 @@ const exportarPDF = async () => {
                 height={40}
                 className="object-contain"
                 onError={(e) => {
-                  e.currentTarget.style.display = 'none';  // Esconde se a imagem não existir
+                  e.currentTarget.style.display = 'none';
                 }}
               />
             </div>
             <div>
               <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                📚 Simulador de Prova
+                📚 Simulador de Concurso
               </h1>
-              <span className="text-xs text-gray-500 dark:text-gray-400"></span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">com IA</span>
             </div>
           </div>
 
-          {/* Botão de alternar modo escuro */}
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="p-2.5 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xl"
@@ -607,7 +545,7 @@ const exportarPDF = async () => {
       <div className="max-w-4xl mx-auto px-4 py-8">
         
         {/* ============================================================
-            FORMULÁRIO - ÁREA DE ENTRADA
+            FORMULÁRIO
             ============================================================ */}
         <div className={`${cardBg} ${cardShadow} rounded-2xl p-6 mb-8 transition-colors duration-300`}>
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
@@ -615,7 +553,6 @@ const exportarPDF = async () => {
           </h2>
           
           <div className="space-y-4">
-            {/* Seletor de categoria */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 📂 Selecione uma categoria:
@@ -635,7 +572,6 @@ const exportarPDF = async () => {
               </select>
             </div>
 
-            {/* Campo de texto personalizado (aparece apenas no modo texto) */}
             {modoEntrada === 'texto' && (
               <div className="animate-fade-in">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -660,7 +596,6 @@ const exportarPDF = async () => {
               </div>
             )}
 
-            {/* Seletor de quantidade de questões */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Quantidade de questões:
@@ -683,7 +618,6 @@ const exportarPDF = async () => {
               </div>
             </div>
 
-            {/* Botão gerar simulado */}
             <button
               onClick={handleGerarSimulado}
               disabled={carregando || 
@@ -700,7 +634,6 @@ const exportarPDF = async () => {
               )}
             </button>
 
-            {/* Mensagens de erro e aviso */}
             {erro && (
               <div className="p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl">
                 ⚠️ {erro}
@@ -715,11 +648,10 @@ const exportarPDF = async () => {
         </div>
 
         {/* ============================================================
-            QUESTÕES - LISTA DE QUESTÕES PARA RESPONDER
+            QUESTÕES
             ============================================================ */}
         {questoes.length > 0 && !mostrarResultado && (
           <div className="space-y-4">
-            {/* Barra de progresso */}
             <div className={`${cardBg} ${cardShadow} rounded-2xl p-4 sticky top-[72px] z-10 transition-colors duration-300`}>
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
@@ -734,7 +666,6 @@ const exportarPDF = async () => {
                   </button>
                 )}
               </div>
-              {/* Barra de progresso visual */}
               <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
                 <div 
                   className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-500 rounded-full"
@@ -748,7 +679,6 @@ const exportarPDF = async () => {
               )}
             </div>
 
-            {/* Lista de questões */}
             {questoes.map((q, indice) => (
               <div key={indice} className={`${cardBg} ${cardShadow} rounded-2xl p-6 transition-colors duration-300`}>
                 <div className="flex justify-between items-start mb-3">
@@ -763,7 +693,6 @@ const exportarPDF = async () => {
                 </div>
                 <p className="mb-4 text-gray-800 dark:text-gray-200">{q.pergunta}</p>
                 
-                {/* Alternativas */}
                 <div className="space-y-2">
                   {['A', 'B', 'C', 'D'].map((letra) => (
                     <label 
@@ -790,7 +719,6 @@ const exportarPDF = async () => {
               </div>
             ))}
 
-            {/* Botão finalizar no final da página */}
             {todasRespondidas && (
               <div className="flex justify-center mt-6 animate-fade-in">
                 <button
@@ -805,12 +733,11 @@ const exportarPDF = async () => {
         )}
 
         {/* ============================================================
-            RESULTADO - EXIBIÇÃO DO GABARITO E PONTUAÇÃO
+            RESULTADO
             ============================================================ */}
         {mostrarResultado && (
           <div className={`${cardBg} ${cardShadow} rounded-2xl p-6 mt-8 transition-colors duration-300`}>
             <div id="conteudo-para-pdf">
-              {/* Título e pontuação */}
               <h2 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">
                 🏆 Resultado Final
               </h2>
@@ -831,7 +758,6 @@ const exportarPDF = async () => {
                 </div>
               </div>
 
-              {/* Gabarito comentado */}
               <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">📖 Gabarito Comentado</h3>
               <div className="space-y-6 max-h-96 overflow-y-auto">
                 {questoes.map((q, i) => {
@@ -844,7 +770,6 @@ const exportarPDF = async () => {
                         {i+1}. {q.pergunta}
                       </p>
                       
-                      {/* Alternativas com cores indicativas */}
                       <div className="mt-2 space-y-1.5">
                         {['A', 'B', 'C', 'D'].map((letra) => {
                           const isCorreta = letra === q.correta;
@@ -854,7 +779,6 @@ const exportarPDF = async () => {
                           let bgCor = '';
                           let borda = '';
                           
-                          // Define estilo visual baseado no status da alternativa
                           if (isCorreta && isMarcada) {
                             cor = 'text-green-700 dark:text-green-300';
                             bgCor = 'bg-green-50 dark:bg-green-900/20';
@@ -891,7 +815,6 @@ const exportarPDF = async () => {
                         })}
                       </div>
                       
-                      {/* Informações adicionais */}
                       <div className="mt-3 space-y-1">
                         <p className="text-green-600 dark:text-green-400 font-medium">
                           ✅ Correta: {q.correta}
@@ -909,8 +832,8 @@ const exportarPDF = async () => {
               </div>
             </div>
 
-            {/* Botões de ação */}
             <div className="space-y-3 mt-6">
+              {/* BOTÃO EXPORTAR PDF - CORRIGIDO */}
               <button
                 onClick={exportarPDF}
                 className="w-full bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-all duration-200"
@@ -931,7 +854,7 @@ const exportarPDF = async () => {
             RODAPÉ
             ============================================================ */}
         <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Gerado com ❤️ usando KZ AI</p>
+          <p>Gerado com ❤️ usando DeepSeek AI</p>
         </div>
       </div>
     </main>
