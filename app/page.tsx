@@ -255,222 +255,208 @@ export default function Home() {
   };
 
   // ============================================================
-// FUNÇÃO: EXPORTAR PDF - COM FONTE UNIFORME
-// ============================================================
+  // FUNÇÃO: EXPORTAR PDF - SEM PREFIXOS, APENAS CORES
+  // ============================================================
 
-const exportarPDF = () => {
-  console.log('🟢 Botão Exportar PDF clicado');
-  
-  try {
-    if (!questoes || questoes.length === 0) {
-      setErro('Nenhuma questão para exportar.');
-      return;
-    }
+  const exportarPDF = () => {
+    console.log('🟢 Botão Exportar PDF clicado');
     
-    console.log('🟢 Questões:', questoes.length);
-    
-    // Cria o PDF
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 20;
-    const contentWidth = pageWidth - (margin * 2);
-    let y = margin;
-    
-    // ============================================================
-    // CONFIGURAÇÃO DE FONTE PADRÃO - MANTÉM A MESMA PARA TUDO
-    // ============================================================
-    // Usamos a mesma fonte 'helvetica' com mesmo estilo para tudo
-    // Apenas mudamos a cor quando necessário
-    
-    // ===== CABEÇALHO =====
-    pdf.setFontSize(18);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
-    y += 8;
-    
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text('Gerado por IA com DeepSeek', pageWidth / 2, y, { align: 'center' });
-    y += 10;
-    
-    pdf.setDrawColor(200, 200, 200);
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 10;
-    
-    // ===== RESULTADO =====
-    const acertos = calcularResultado();
-    const total = questoes.length;
-    const percentual = total > 0 ? Math.round((acertos / total) * 100) : 0;
-    
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('RESULTADO FINAL', pageWidth / 2, y, { align: 'center' });
-    y += 8;
-    
-    pdf.setFontSize(22);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(`${acertos} / ${total}`, pageWidth / 2, y, { align: 'center' });
-    y += 8;
-    
-    pdf.setFontSize(12);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text(`${percentual}% de acertos`, pageWidth / 2, y, { align: 'center' });
-    y += 6;
-    
-    const status = percentual >= 70 ? 'APROVADO!' : 'Continue estudando!';
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(status, pageWidth / 2, y, { align: 'center' });
-    y += 12;
-    
-    pdf.line(margin, y, pageWidth - margin, y);
-    y += 10;
-    
-    // ===== GABARITO =====
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
-    y += 10;
-    
-    // ============================================================
-    // PERCORRE TODAS AS QUESTÕES - FONTE UNIFORME
-    // ============================================================
-    for (let i = 0; i < questoes.length; i++) {
-      const q = questoes[i];
-      const respostaUsuario = respostas[i] || 'Não respondeu';
-      const acertou = respostaUsuario === q.correta;
-      
-      // Verifica se cabe na página
-      if (y > pageHeight - 50) {
-        pdf.addPage();
-        y = margin;
+    try {
+      if (!questoes || questoes.length === 0) {
+        setErro('Nenhuma questão para exportar.');
+        return;
       }
       
-      // ===== NÚMERO DA QUESTÃO =====
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(0, 0, 0);
-      pdf.text(`Questão ${i + 1}`, margin, y);
-      y += 6;
+      console.log('🟢 Questões:', questoes.length);
       
-      // ===== ENUNCIADO =====
-      let perguntaLimpa = q.pergunta
-        .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 20;
+      const contentWidth = pageWidth - (margin * 2);
+      let y = margin;
+      
+      // ===== CABEÇALHO =====
+      pdf.setFontSize(18);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
+      y += 8;
       
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(0, 0, 0);
-      const perguntaLines = pdf.splitTextToSize(perguntaLimpa, contentWidth);
-      pdf.text(perguntaLines, margin, y);
-      y += perguntaLines.length * 5 + 4;
+      pdf.text('Gerado por IA com DeepSeek', pageWidth / 2, y, { align: 'center' });
+      y += 10;
       
-      // ============================================================
-      // ALTERNATIVAS - MESMA FONTE PARA TODAS
-      // APENAS A COR MUDA, O ESPAÇAMENTO É IDÊNTICO
-      // ============================================================
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');  // ← MESMA FONTE PARA TODAS
+      pdf.setDrawColor(200, 200, 200);
+      pdf.line(margin, y, pageWidth - margin, y);
+      y += 10;
       
-      const alternativas = ['A', 'B', 'C', 'D'];
-      for (const letra of alternativas) {
-        const texto = `${letra}) ${q.opcoes[letra]}`;
-        
-        // ===== DEFINE A COR (SEM ALTERAR A FONTE) =====
-        if (isCorreta) {
-          pdf.setTextColor(0, 150, 0);      // Verde
-        } else if (isMarcada && !isCorreta) {
-          pdf.setTextColor(200, 0, 0);      // Vermelho
-        } else {
-          pdf.setTextColor(0, 0, 0);        // Preto
-        }
-        
-        // ===== TEXTO COM INDICADOR =====
-        
-        const lines = pdf.splitTextToSize(texto, contentWidth);
-        pdf.text(lines, margin, y);
-        y += lines.length * 5 + 1;
-      }
+      // ===== RESULTADO =====
+      const acertos = calcularResultado();
+      const total = questoes.length;
+      const percentual = total > 0 ? Math.round((acertos / total) * 100) : 0;
       
-      // ============================================================
-      // CORRETA - MESMA FONTE
-      // ============================================================
-      pdf.setTextColor(0, 0, 0);
-      y += 2;
-      
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');    // ← MESMA FONTE
-      pdf.setTextColor(0, 150, 0);
-      pdf.text(`Correta: ${q.correta}`, margin, y);
-      y += 5;
-      
-      // ============================================================
-      // EXPLICAÇÃO - MESMA FONTE
-      // ============================================================
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');    // ← MESMA FONTE (sem itálico)
-      pdf.setTextColor(80, 80, 80);
-      
-      let explicacaoLimpa = q.explicacao
-        .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      const explicacaoLines = pdf.splitTextToSize(explicacaoLimpa, contentWidth - 4);
-      pdf.text(explicacaoLines, margin + 4, y);
-      y += explicacaoLines.length * 4 + 4;
-      
-      // ============================================================
-      // SUA RESPOSTA - MESMA FONTE
-      // ============================================================
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');    // ← MESMA FONTE
-      const acertouText = acertou ? 'Acertou!' : 'Errou!';
-      
-      if (acertou) {
-        pdf.setTextColor(0, 150, 0);
-      } else {
-        pdf.setTextColor(200, 0, 0);
-      }
-      
-      pdf.text(`Sua resposta: ${respostaUsuario} - ${acertouText}`, margin, y);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('RESULTADO FINAL', pageWidth / 2, y, { align: 'center' });
       y += 8;
       
-      pdf.setTextColor(0, 0, 0);
+      pdf.setFontSize(22);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${acertos} / ${total}`, pageWidth / 2, y, { align: 'center' });
+      y += 8;
       
-      // Linha separadora
-      if (i < questoes.length - 1) {
-        pdf.setDrawColor(220, 220, 220);
-        pdf.line(margin, y, pageWidth - margin, y);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`${percentual}% de acertos`, pageWidth / 2, y, { align: 'center' });
+      y += 6;
+      
+      const status = percentual >= 70 ? 'APROVADO!' : 'Continue estudando!';
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(status, pageWidth / 2, y, { align: 'center' });
+      y += 12;
+      
+      pdf.line(margin, y, pageWidth - margin, y);
+      y += 10;
+      
+      // ===== GABARITO =====
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
+      y += 10;
+      
+      // ============================================================
+      // PERCORRE TODAS AS QUESTÕES
+      // ============================================================
+      for (let i = 0; i < questoes.length; i++) {
+        const q = questoes[i];
+        const respostaUsuario = respostas[i] || 'Não respondeu';
+        const acertou = respostaUsuario === q.correta;
+        
+        if (y > pageHeight - 50) {
+          pdf.addPage();
+          y = margin;
+        }
+        
+        // ===== NÚMERO DA QUESTÃO =====
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(`Questão ${i + 1}`, margin, y);
         y += 6;
+        
+        // ===== ENUNCIADO =====
+        let perguntaLimpa = q.pergunta
+          .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(0, 0, 0);
+        const perguntaLines = pdf.splitTextToSize(perguntaLimpa, contentWidth);
+        pdf.text(perguntaLines, margin, y);
+        y += perguntaLines.length * 5 + 4;
+        
+        // ============================================================
+        // ALTERNATIVAS - APENAS CORES, SEM PREFIXOS
+        // ============================================================
+        pdf.setFontSize(10);
+        pdf.setFont('helvetica', 'normal');
+        
+        const alternativas = ['A', 'B', 'C', 'D'];
+        for (const letra of alternativas) {
+          const texto = `${letra}) ${q.opcoes[letra as keyof typeof q.opcoes]}`;
+          const isCorreta = letra === q.correta;
+          const isMarcada = respostaUsuario === letra;
+          
+          // ===== DEFINE A COR (SEM PREFIXOS) =====
+          if (isCorreta) {
+            pdf.setTextColor(0, 150, 0);      // Verde para correta
+          } else if (isMarcada && !isCorreta) {
+            pdf.setTextColor(200, 0, 0);      // Vermelho para errada marcada
+          } else {
+            pdf.setTextColor(0, 0, 0);        // Preto para normal
+          }
+          
+          // ===== TEXTO SEM PREFIXOS =====
+          const lines = pdf.splitTextToSize(texto, contentWidth - 4);
+          pdf.text(lines, margin + 4, y);
+          y += lines.length * 5 + 1;
+        }
+        
+        pdf.setTextColor(0, 0, 0);
+        y += 2;
+        
+        // ===== CORRETA =====
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(0, 150, 0);
+        pdf.text(`Correta: ${q.correta}`, margin, y);
+        y += 5;
+        
+        // ===== EXPLICAÇÃO =====
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(80, 80, 80);
+        
+        let explicacaoLimpa = q.explicacao
+          .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        const explicacaoLines = pdf.splitTextToSize(explicacaoLimpa, contentWidth - 4);
+        pdf.text(explicacaoLines, margin + 4, y);
+        y += explicacaoLines.length * 4 + 4;
+        
+        // ===== SUA RESPOSTA =====
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'normal');
+        const acertouText = acertou ? 'Acertou!' : 'Errou!';
+        
+        if (acertou) {
+          pdf.setTextColor(0, 150, 0);
+        } else {
+          pdf.setTextColor(200, 0, 0);
+        }
+        
+        pdf.text(`Sua resposta: ${respostaUsuario} - ${acertouText}`, margin, y);
+        y += 8;
+        
+        pdf.setTextColor(0, 0, 0);
+        
+        // Linha separadora
+        if (i < questoes.length - 1) {
+          pdf.setDrawColor(220, 220, 220);
+          pdf.line(margin, y, pageWidth - margin, y);
+          y += 6;
+        }
       }
+      
+      // ===== RODAPÉ =====
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(
+          `Gerado com DeepSeek AI - Página ${i} de ${totalPages}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        );
+        pdf.setTextColor(0, 0, 0);
+      }
+      
+      pdf.save('simulado.pdf');
+      console.log('✅ PDF salvo com sucesso!');
+      
+    } catch (error) {
+      console.error('🔴 Erro ao gerar PDF:', error);
+      setErro(`Erro ao gerar PDF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
-    
-    // ===== RODAPÉ =====
-    const totalPages = pdf.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-      pdf.setPage(i);
-      pdf.setFontSize(8);
-      pdf.setFont('helvetica', 'italic');
-      pdf.setTextColor(150, 150, 150);
-      pdf.text(
-        `Gerado com DeepSeek AI - Página ${i} de ${totalPages}`,
-        pageWidth / 2,
-        pageHeight - 10,
-        { align: 'center' }
-      );
-      pdf.setTextColor(0, 0, 0);
-    }
-    
-    pdf.save('simulado.pdf');
-    console.log('✅ PDF salvo com sucesso!');
-    
-  } catch (error) {
-    console.error('🔴 Erro ao gerar PDF:', error);
-    setErro(`Erro ao gerar PDF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-  }
-};
+  };
 
   // ============================================================
   // CLASSES CONDICIONAIS - DARK MODE
@@ -837,7 +823,6 @@ const exportarPDF = () => {
             </div>
 
             <div className="space-y-3 mt-6">
-              {/* BOTÃO EXPORTAR PDF - CORRIGIDO */}
               <button
                 onClick={exportarPDF}
                 className="w-full bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-all duration-200"
