@@ -7,10 +7,12 @@ export async function POST(request: Request) {
     
     const body = await request.json();
     const conteudo = body?.conteudo as string;
-    const quantidade = body?.quantidade || 40; // Pega a quantidade ou usa 40 como padrão
+    const quantidade = body?.quantidade || 40;
+    const categoria = body?.categoria || 'Todas';
     
     console.log('📝 Conteúdo:', conteudo?.length || 0, 'caracteres');
-    console.log('📊 Quantidade solicitada:', quantidade, 'questões');
+    console.log('📊 Quantidade:', quantidade);
+    console.log('📂 Categoria:', categoria);
     
     if (!conteudo || conteudo.length < 50) {
       return NextResponse.json({ 
@@ -20,25 +22,29 @@ export async function POST(request: Request) {
 
     const apiKey = process.env.DEEPSEEK_API_KEY;
     if (!apiKey) {
+      console.error('❌ API Key ausente');
       return NextResponse.json({ 
         erro: 'Chave da API não configurada' 
       }, { status: 500 });
     }
 
-    // ===== PROMPT COM QUANTIDADE DINÂMICA =====
+    // ===== PROMPT COM CATEGORIA =====
     const PROMPT_QUESTIONS = `
 Você é um professor especialista em concursos públicos.
 
 CRIE EXATAMENTE ${quantidade} QUESTÕES de múltipla escolha sobre o conteúdo abaixo.
 
+${categoria !== 'Todas' ? `FOQUE APENAS NA CATEGORIA: ${categoria}` : 'MISTURE DIFERENTES TÓPICOS do conteúdo.'}
+
 INSTRUÇÕES DETALHADAS:
 1. Cada questão deve ter 4 alternativas: A, B, C, D
 2. Apenas UMA alternativa deve ser correta
-3. As alternativas incorretas devem ser plausíveis
+3. As alternativas incorretas devem ser plausíveis (não absurdas)
 4. Dê uma explicação detalhada do porquê a resposta está certa
 5. As questões devem ser desafiadoras (nível médio/difícil)
 6. Use linguagem formal de concurso
 7. Distribua as questões por diferentes tópicos do conteúdo
+8. Evite questões muito óbvias ou repetitivas
 
 RESPONDA APENAS COM JSON. NADA MAIS.
 
