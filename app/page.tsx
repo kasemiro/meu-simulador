@@ -18,20 +18,91 @@ type Questao = {
   explicacao: string;
 };
 
+// ===== CATEGORIAS COM CONTEÚDO PRÉ-DEFINIDO =====
 const CATEGORIAS = [
-  'Todas',
-  'Língua Portuguesa',
-  'Matemática',
-  'História do Brasil',
-  'Informática',
-  'Atualidades',
-  'Raciocínio Lógico',
+  {
+    nome: '📚 Língua Portuguesa',
+    conteudo: `Língua Portuguesa para concursos públicos:
+
+1. Interpretação de Texto: A princípio, interpretação de texto é o carro-chefe das provas de Português. Ou seja, muitas questões giram em torno da sua capacidade de compreender e analisar textos. Além disso, as bancas cobram a identificação de ideias centrais, inferências e temas implícitos. Portanto, praticar com textos variados e questões de provas anteriores é fundamental.
+
+2. Ortografia e Acentuação: Agora, o uso correto da ortografia e das regras de acentuação gráfica continua sendo muito cobrado, principalmente devido à reforma ortográfica. Por exemplo, conhecer as regras de hífen, uso de acentos diferenciais e mudanças no uso de tremas são essenciais.
+
+3. Concordância Verbal e Nominal: Sobretudo, a concordância verbal e nominal é uma das partes mais técnicas, mas também uma das mais frequentes. Além disso, as bancas gostam de testar como você lida com a relação entre o sujeito e o verbo, além da adequação de adjetivos e substantivos.
+
+4. Crase: Por fim, o uso da crase é um dos temas que mais confunde os candidatos. Nesse sentido, as bancas pedem que você saiba quando o uso do acento grave é obrigatório, facultativo ou proibido.
+
+5. Pontuação: Além disso, a pontuação é crucial para garantir que a construção do texto seja coerente e compreensível. Por exemplo, questões sobre o uso correto de vírgulas, pontos e travessões estão presentes em quase todas as provas.
+
+6. Regência Verbal e Nominal: Agora, a regência verbal e nominal é cobrada para testar seu conhecimento sobre a relação entre os verbos, substantivos e os complementos que os acompanham. Portanto, praticar com exercícios que abordam regência é importante para se sair bem.
+
+7. Figuras de Linguagem: A princípio, as figuras de linguagem costumam aparecer em questões de interpretação e análise textual. Além disso, identificar corretamente metáforas, hipérboles, eufemismos e outras figuras pode garantir alguns pontos extras.
+
+8. Formação de Palavras: Agora, entender os processos de formação de palavras, como prefixação, sufixação e composição, é essencial. Além disso, esse tema está diretamente ligado à morfologia, o que torna seu estudo ainda mais importante.
+
+9. Sintaxe e Análise Sintática: Sobretudo, o conhecimento sobre a estrutura das frases, a função dos termos dentro das orações e a classificação das orações subordinadas e coordenadas são recorrentes nas provas.`
+  },
+  {
+    nome: '🔢 Matemática',
+    conteudo: `Matemática para concursos públicos:
+
+1. Aritmética Básica: Operações fundamentais (adição, subtração, multiplicação, divisão), Regra de três simples e composta, Porcentagem e proporção.
+
+2. Álgebra: Expressões algébricas, Equações e inequações do 1º e 2º grau, Sistemas de equações.
+
+3. Geometria: Geometria plana (áreas e perímetros de figuras planas), Geometria espacial (volumes e áreas de sólidos geométricos), Noções de geometria analítica.
+
+4. Análise Combinatória e Probabilidade: Contagem de elementos, Fatorial, Permutações, combinações e arranjos simples, Probabilidade básica.
+
+5. Matemática Financeira: Juros simples e compostos, Porcentagem aplicada a situações financeiras.
+
+6. Estatística: Noções básicas de estatística, Interpretação de gráficos e tabelas.
+
+7. Raciocínio Lógico: Proposições lógicas, Tabelas verdade, Raciocínio lógico-matemático.
+
+8. Resolução de Problemas: Aplicação prática dos conceitos matemáticos em situações do cotidiano.`
+  },
+  {
+    nome: '📖 Pedagogia',
+    conteudo: `Pedagogia para concursos públicos:
+
+1. Legislação Educacional: LDB (Lei nº 9.394/96), ECA (Estatuto da Criança e do Adolescente), BNCC (Base Nacional Comum Curricular) e o PNE (Plano Nacional de Educação).
+
+2. Teorias da Aprendizagem: Conhecer os clássicos da educação como Piaget (desenvolvimento), Vygotsky (interacionismo) e Wallon (afetividade).
+
+3. Didática e Organização Escolar: Planejamento participativo, PPP (Projeto Político-Pedagógico), currículo, avaliação formativa e tendências pedagógicas.
+
+4. Educação Inclusiva: Atendimento Educacional Especializado (AEE) e diretrizes para a educação especial, Pilares da Educação.`
+  },
+  {
+    nome: '🏛️ História',
+    conteudo: `História para concursos públicos:
+
+1. A Pré-História: Conceito e períodos da Pré-História.
+
+2. A Idade Média: Feudalismo: estrutura social e econômica.
+
+3. Revoluções do Século XIX: A Revolução Industrial e suas consequências.
+
+4. Era Pós-Guerra e Descolonização: Reconstrução pós-Segunda Guerra Mundial.
+
+5. Brasil Império: Primeiro Reinado, Período Regencial, Segundo Reinado, Abolição da Escravatura e Proclamação da República.
+
+6. Brasil República: República Velha, Era Vargas, República Populista, Ditadura Militar.
+
+7. Brasil entre 1961 e 1989: Governos de Jânio Quadros, João Goulart, regime militar (1964-1985), abertura política e constituição de 1988.`
+  },
+  {
+    nome: '✍️ Escrever meu próprio conteúdo',
+    conteudo: null
+  }
 ];
 
 export default function Home() {
   const [conteudo, setConteudo] = useState('');
   const [quantidade, setQuantidade] = useState(40);
-  const [categoria, setCategoria] = useState('Todas');
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
+  const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto'>('categoria');
   const [carregando, setCarregando] = useState(false);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
   const [respostas, setRespostas] = useState<Record<number, string>>({});
@@ -59,13 +130,25 @@ export default function Home() {
 
   // ===== GERAR SIMULADO =====
   const handleGerarSimulado = async () => {
-    if (!conteudo.trim()) {
-      setErro('Digite ou cole o conteúdo programático!');
-      return;
-    }
-    if (conteudo.trim().length < 50) {
-      setErro('Digite pelo menos 50 caracteres!');
-      return;
+    let textoParaEnviar = '';
+
+    if (modoEntrada === 'categoria') {
+      const categoria = CATEGORIAS.find(c => c.nome === categoriaSelecionada);
+      if (!categoria || !categoria.conteudo) {
+        setErro('Selecione uma categoria válida ou escolha "Escrever meu próprio conteúdo".');
+        return;
+      }
+      textoParaEnviar = categoria.conteudo;
+    } else {
+      if (!conteudo.trim()) {
+        setErro('Digite ou cole o conteúdo programático!');
+        return;
+      }
+      if (conteudo.trim().length < 50) {
+        setErro('Digite pelo menos 50 caracteres!');
+        return;
+      }
+      textoParaEnviar = conteudo.trim();
     }
 
     setCarregando(true);
@@ -79,9 +162,8 @@ export default function Home() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          conteudo: conteudo.trim(),
-          quantidade: quantidade,
-          categoria: categoria
+          conteudo: textoParaEnviar,
+          quantidade: quantidade
         })
       });
 
@@ -174,6 +256,17 @@ export default function Home() {
   const inputBg = darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300';
   const hoverBg = darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50';
 
+  const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const valor = e.target.value;
+    setCategoriaSelecionada(valor);
+    
+    if (valor === '✍️ Escrever meu próprio conteúdo') {
+      setModoEntrada('texto');
+    } else {
+      setModoEntrada('categoria');
+    }
+  };
+
   return (
     <main className="min-h-screen transition-colors duration-300">
       {/* ===== HEADER ===== */}
@@ -215,49 +308,54 @@ export default function Home() {
         {/* ===== FORMULÁRIO ===== */}
         <div className={`${cardBg} ${cardShadow} rounded-2xl p-6 mb-8 transition-colors duration-300`}>
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            1. Cole o conteúdo programático
+            1. Escolha uma categoria ou digite seu conteúdo
           </h2>
           
           <div className="space-y-4">
             {/* CATEGORIA */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                📂 Categoria:
+                📂 Selecione uma categoria:
               </label>
               <select
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
+                value={categoriaSelecionada}
+                onChange={handleCategoriaChange}
                 className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${inputBg} text-gray-900 dark:text-gray-100`}
                 disabled={carregando}
               >
+                <option value="">-- Selecione uma categoria --</option>
                 {CATEGORIAS.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
+                  <option key={cat.nome} value={cat.nome}>
+                    {cat.nome}
+                  </option>
                 ))}
               </select>
             </div>
 
-            {/* TEXTO */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Conteúdo:
-              </label>
-              <textarea
-                value={conteudo}
-                onChange={(e) => setConteudo(e.target.value)}
-                placeholder="Cole aqui o conteúdo do edital, matérias, leis, etc."
-                className={`w-full h-64 p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm transition-colors duration-300 ${inputBg} text-gray-900 dark:text-gray-100`}
-                disabled={carregando}
-              />
-              <div className="flex justify-between mt-2 text-sm text-gray-500 dark:text-gray-400">
-                <span>{conteudo.length} caracteres</span>
-                {conteudo.length > 0 && conteudo.length < 50 && (
-                  <span className="text-yellow-600 dark:text-yellow-400">⚠️ Mínimo 50</span>
-                )}
-                {conteudo.length >= 50 && (
-                  <span className="text-green-600 dark:text-green-400">✅ OK</span>
-                )}
+            {/* CAMPO DE TEXTO PERSONALIZADO */}
+            {modoEntrada === 'texto' && (
+              <div className="animate-fade-in">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  ✍️ Digite seu conteúdo:
+                </label>
+                <textarea
+                  value={conteudo}
+                  onChange={(e) => setConteudo(e.target.value)}
+                  placeholder="Cole aqui o conteúdo do edital, matérias, leis, etc."
+                  className={`w-full h-64 p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm transition-colors duration-300 ${inputBg} text-gray-900 dark:text-gray-100`}
+                  disabled={carregando}
+                />
+                <div className="flex justify-between mt-2 text-sm text-gray-500 dark:text-gray-400">
+                  <span>{conteudo.length} caracteres</span>
+                  {conteudo.length > 0 && conteudo.length < 50 && (
+                    <span className="text-yellow-600 dark:text-yellow-400">⚠️ Mínimo 50</span>
+                  )}
+                  {conteudo.length >= 50 && (
+                    <span className="text-green-600 dark:text-green-400">✅ OK</span>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* QUANTIDADE */}
             <div>
@@ -285,7 +383,9 @@ export default function Home() {
             {/* BOTÃO GERAR */}
             <button
               onClick={handleGerarSimulado}
-              disabled={carregando || conteudo.length < 50}
+              disabled={carregando || 
+                (modoEntrada === 'categoria' && !categoriaSelecionada) ||
+                (modoEntrada === 'texto' && conteudo.length < 50)}
               className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-6 py-3.5 rounded-xl text-lg font-semibold transition-all duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600"
             >
               {carregando ? (
