@@ -227,21 +227,35 @@ export default function Home() {
     try {
       setErro('');
       
-      // Cria um novo PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
       const pageHeight = 297;
-      const margin = 25;
+      const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
       let y = margin;
       
-      // ===== FONTES =====
-      pdf.setFont('helvetica');
+      // ===== FUNÇÃO PARA ADICIONAR RODAPÉ =====
+      const addFooter = () => {
+        const totalPages = pdf.getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          pdf.setPage(i);
+          pdf.setFontSize(8);
+          pdf.setFont('helvetica', 'italic');
+          pdf.setTextColor(150, 150, 150);
+          pdf.text(
+            `Gerado com KZ AI - Página ${i} de ${totalPages}`,
+            pageWidth / 2,
+            pageHeight - 10,
+            { align: 'center' }
+          );
+          pdf.setTextColor(0, 0, 0);
+        }
+      };
       
       // ===== CABEÇALHO =====
-      pdf.setFontSize(16);
+      pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('📚 Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
+      pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
       y += 8;
       
       pdf.setFontSize(10);
@@ -260,10 +274,10 @@ export default function Home() {
       
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('🏆 RESULTADO FINAL', pageWidth / 2, y, { align: 'center' });
+      pdf.text('RESULTADO FINAL', pageWidth / 2, y, { align: 'center' });
       y += 8;
       
-      pdf.setFontSize(20);
+      pdf.setFontSize(22);
       pdf.setFont('helvetica', 'bold');
       pdf.text(`${acertos} / ${total}`, pageWidth / 2, y, { align: 'center' });
       y += 8;
@@ -273,7 +287,7 @@ export default function Home() {
       pdf.text(`${percentual}% de acertos`, pageWidth / 2, y, { align: 'center' });
       y += 6;
       
-      const status = percentual >= 70 ? '✅ APROVADO!' : '❌ Continue estudando!';
+      const status = percentual >= 70 ? 'APROVADO!' : 'Continue estudando!';
       pdf.setFont('helvetica', 'bold');
       pdf.text(status, pageWidth / 2, y, { align: 'center' });
       y += 12;
@@ -284,7 +298,7 @@ export default function Home() {
       // ===== GABARITO =====
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('📖 GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
+      pdf.text('GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
       y += 10;
       
       // ===== QUESTÕES =====
@@ -293,26 +307,27 @@ export default function Home() {
         const respostaUsuario = respostas[i] || 'Não respondeu';
         const acertou = respostaUsuario === q.correta;
         
-        // Verifica se cabe na página
-        if (y > pageHeight - 60) {
+        if (y > pageHeight - 40) {
           pdf.addPage();
           y = margin;
         }
         
-        // Número da questão
         pdf.setFontSize(11);
         pdf.setFont('helvetica', 'bold');
         pdf.text(`Questão ${i + 1}`, margin, y);
         y += 6;
         
-        // Enunciado
+        let perguntaLimpa = q.pergunta
+          .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
-        const perguntaLines = pdf.splitTextToSize(q.pergunta, contentWidth);
+        const perguntaLines = pdf.splitTextToSize(perguntaLimpa, contentWidth);
         pdf.text(perguntaLines, margin, y);
         y += perguntaLines.length * 5 + 4;
         
-        // Alternativas
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
         const alternativas = ['A', 'B', 'C', 'D'];
@@ -321,7 +336,6 @@ export default function Home() {
           const isCorreta = letra === q.correta;
           const isMarcada = respostaUsuario === letra;
           
-          // Define estilo
           if (isCorreta) {
             pdf.setFont('helvetica', 'bold');
             pdf.setTextColor(0, 150, 0);
@@ -333,39 +347,41 @@ export default function Home() {
             pdf.setTextColor(0, 0, 0);
           }
           
-          // Adiciona indicadores
           let prefixo = '';
-          if (isCorreta) prefixo = '✅ ';
-          if (isMarcada && !isCorreta) prefixo = '❌ ';
+          if (isCorreta) prefixo = '✓ ';
+          if (isMarcada && !isCorreta) prefixo = '✗ ';
           
           const lineText = prefixo + texto;
-          const lines = pdf.splitTextToSize(lineText, contentWidth);
-          pdf.text(lines, margin + 2, y);
+          const lines = pdf.splitTextToSize(lineText, contentWidth - 4);
+          pdf.text(lines, margin + 4, y);
           y += lines.length * 5 + 1;
         }
         
         pdf.setTextColor(0, 0, 0);
         y += 2;
         
-        // Correta
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 150, 0);
-        pdf.text(`✅ Correta: ${q.correta}`, margin, y);
+        pdf.text(`Correta: ${q.correta}`, margin, y);
         y += 5;
         
-        // Explicação
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'italic');
         pdf.setTextColor(80, 80, 80);
         
-        const explicacaoLines = pdf.splitTextToSize(`💡 ${q.explicacao}`, contentWidth);
-        pdf.text(explicacaoLines, margin + 2, y);
+        let explicacaoLimpa = q.explicacao
+          .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        const explicacaoLines = pdf.splitTextToSize(explicacaoLimpa, contentWidth - 4);
+        pdf.text(explicacaoLines, margin + 4, y);
         y += explicacaoLines.length * 4 + 4;
         
-        // Sua resposta - CORRIGIDO
         pdf.setFont('helvetica', 'normal');
-        const acertouText = acertou ? '✅ Acertou!' : '❌ Errou!';
+        pdf.setFontSize(9);
+        const acertouText = acertou ? 'Acertou!' : 'Errou!';
         
         if (acertou) {
           pdf.setTextColor(0, 150, 0);
@@ -378,7 +394,6 @@ export default function Home() {
         
         pdf.setTextColor(0, 0, 0);
         
-        // Linha separadora
         if (i < questoes.length - 1) {
           pdf.setDrawColor(220, 220, 220);
           pdf.line(margin, y, pageWidth - margin, y);
@@ -386,22 +401,7 @@ export default function Home() {
         }
       }
       
-      // ===== RODAPÉ =====
-      const totalPages = pdf.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'italic');
-        pdf.setTextColor(150, 150, 150);
-        pdf.text(
-          `Gerado com ❤️ usando DeepSeek AI - Página ${i} de ${totalPages}`,
-          pageWidth / 2,
-          pageHeight - 10,
-          { align: 'center' }
-        );
-        pdf.setTextColor(0, 0, 0);
-      }
-      
+      addFooter();
       pdf.save('simulado.pdf');
       
     } catch (error) {
@@ -416,7 +416,6 @@ export default function Home() {
   const inputBg = darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300';
   const hoverBg = darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50';
 
-  // ===== HANDLE CATEGORIA CHANGE =====
   const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const valor = e.target.value;
     setCategoriaSelecionada(valor);
@@ -428,7 +427,6 @@ export default function Home() {
     }
   };
 
-  // ===== VERIFICA SE TODAS FORAM RESPONDIDAS =====
   const todasRespondidas = questoes.length > 0 && Object.keys(respostas).length === questoes.length;
 
   return (
@@ -476,7 +474,6 @@ export default function Home() {
           </h2>
           
           <div className="space-y-4">
-            {/* CATEGORIA */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 📂 Selecione uma categoria:
@@ -496,7 +493,6 @@ export default function Home() {
               </select>
             </div>
 
-            {/* CAMPO DE TEXTO PERSONALIZADO */}
             {modoEntrada === 'texto' && (
               <div className="animate-fade-in">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -521,7 +517,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* QUANTIDADE */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Quantidade de questões:
@@ -544,7 +539,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* BOTÃO GERAR */}
             <button
               onClick={handleGerarSimulado}
               disabled={carregando || 
@@ -577,7 +571,6 @@ export default function Home() {
         {/* ===== QUESTÕES ===== */}
         {questoes.length > 0 && !mostrarResultado && (
           <div className="space-y-4">
-            {/* BARRA DE PROGRESSO */}
             <div className={`${cardBg} ${cardShadow} rounded-2xl p-4 sticky top-[72px] z-10 transition-colors duration-300`}>
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
@@ -592,7 +585,6 @@ export default function Home() {
                   </button>
                 )}
               </div>
-              {/* BARRA DE PROGRESSO VISUAL */}
               <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
                 <div 
                   className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-500 rounded-full"
@@ -606,7 +598,6 @@ export default function Home() {
               )}
             </div>
 
-            {/* LISTA DE QUESTÕES */}
             {questoes.map((q, indice) => (
               <div key={indice} className={`${cardBg} ${cardShadow} rounded-2xl p-6 transition-colors duration-300`}>
                 <div className="flex justify-between items-start mb-3">
@@ -647,7 +638,6 @@ export default function Home() {
               </div>
             ))}
 
-            {/* BOTÃO FINALIZAR NO FINAL */}
             {todasRespondidas && (
               <div className="flex justify-center mt-6 animate-fade-in">
                 <button
@@ -749,7 +739,7 @@ export default function Home() {
 
         {/* ===== RODAPÉ ===== */}
         <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Gerado com ❤️ usando DeepSeek AI</p>
+          <p>Gerado com ❤️ por KASEMIRO </p>
         </div>
       </div>
     </main>
