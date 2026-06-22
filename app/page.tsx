@@ -1,24 +1,45 @@
-// app/page.tsx
+// ============================================================
+// ARQUIVO: app/page.tsx
+// DESCRIÇÃO: Página principal do Simulador de Concurso com IA
+// FUNCIONALIDADES: Categorias, geração de questões, modo escuro, PDF, etc.
+// ============================================================
+
 'use client';
 
-import { useState, useEffect } from 'react';
-import Image from 'next/image';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// ============================================================
+// IMPORTAÇÕES
+// ============================================================
+import { useState, useEffect } from 'react';        // Gerenciamento de estado e efeitos
+import Image from 'next/image';                      // Componente de imagem otimizado do Next
+import jsPDF from 'jspdf';                           // Biblioteca para gerar PDF
+import html2canvas from 'html2canvas';              // Converte HTML para imagem (usado no PDF)
 
+// ============================================================
+// TIPOS (TypeScript)
+// ============================================================
+
+/** Estrutura de uma questão gerada pela IA */
 type Questao = {
-  pergunta: string;
-  opcoes: {
+  pergunta: string;                                 // Enunciado da questão
+  opcoes: {                                          // Alternativas
     A: string;
     B: string;
     C: string;
     D: string;
   };
-  correta: string;
-  explicacao: string;
+  correta: string;                                  // Alternativa correta (A, B, C ou D)
+  explicacao: string;                               // Explicação da resposta
 };
 
-// ===== CATEGORIAS COM CONTEÚDO PRÉ-DEFINIDO =====
+// ============================================================
+// CATEGORIAS COM CONTEÚDO PRÉ-DEFINIDO
+// ============================================================
+
+/** 
+ * Array de categorias disponíveis para o usuário.
+ * Cada categoria tem um nome e um conteúdo pré-definido.
+ * A opção "✍️ Escrever meu próprio conteúdo" permite entrada personalizada.
+ */
 const CATEGORIAS = [
   {
     nome: '📚 Língua Portuguesa',
@@ -94,24 +115,39 @@ const CATEGORIAS = [
   },
   {
     nome: '✍️ Escrever meu próprio conteúdo',
-    conteudo: null
+    conteudo: null                                          // Conteúdo será inserido pelo usuário
   }
 ];
 
-export default function Home() {
-  const [conteudo, setConteudo] = useState('');
-  const [quantidade, setQuantidade] = useState(40);
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
-  const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto'>('categoria');
-  const [carregando, setCarregando] = useState(false);
-  const [questoes, setQuestoes] = useState<Questao[]>([]);
-  const [respostas, setRespostas] = useState<Record<number, string>>({});
-  const [mostrarResultado, setMostrarResultado] = useState(false);
-  const [erro, setErro] = useState('');
-  const [aviso, setAviso] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
+// ============================================================
+// COMPONENTE PRINCIPAL
+// ============================================================
 
-  // ===== DARK MODE =====
+export default function Home() {
+  // ============================================================
+  // ESTADOS (STATES)
+  // ============================================================
+
+  const [conteudo, setConteudo] = useState('');               // Texto digitado pelo usuário
+  const [quantidade, setQuantidade] = useState(40);           // Número de questões (20, 40, 60, 80)
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState(''); // Categoria escolhida
+  const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto'>('categoria'); // Modo de entrada
+  const [carregando, setCarregando] = useState(false);       // Estado de carregamento
+  const [questoes, setQuestoes] = useState<Questao[]>([]);   // Lista de questões geradas
+  const [respostas, setRespostas] = useState<Record<number, string>>({}); // Respostas do usuário
+  const [mostrarResultado, setMostrarResultado] = useState(false); // Mostrar resultado
+  const [erro, setErro] = useState('');                      // Mensagem de erro
+  const [aviso, setAviso] = useState('');                    // Mensagem de aviso
+  const [darkMode, setDarkMode] = useState(false);           // Modo escuro ativado/desativado
+
+  // ============================================================
+  // EFEITOS (useEffect) - DARK MODE
+  // ============================================================
+
+  /**
+   * useEffect: Carrega a preferência de dark mode do localStorage
+   * Executado apenas uma vez quando o componente monta
+   */
   useEffect(() => {
     const saved = localStorage.getItem('darkMode');
     if (saved) {
@@ -119,6 +155,11 @@ export default function Home() {
     }
   }, []);
 
+  /**
+   * useEffect: Salva a preferência de dark mode no localStorage
+   * e aplica/remove a classe 'dark' no HTML
+   * Executado sempre que darkMode muda
+   */
   useEffect(() => {
     localStorage.setItem('darkMode', String(darkMode));
     if (darkMode) {
@@ -128,10 +169,22 @@ export default function Home() {
     }
   }, [darkMode]);
 
-  // ===== GERAR SIMULADO =====
+  // ============================================================
+  // FUNÇÃO: GERAR SIMULADO
+  // ============================================================
+
+  /**
+   * handleGerarSimulado
+   * Função principal que:
+   * 1. Valida se há conteúdo (categoria ou texto)
+   * 2. Envia para a API /api/generate-quiz
+   * 3. Recebe as questões geradas pela IA
+   * 4. Atualiza o estado com as questões
+   */
   const handleGerarSimulado = async () => {
     let textoParaEnviar = '';
 
+    // Determina o conteúdo a ser enviado baseado no modo de entrada
     if (modoEntrada === 'categoria') {
       const categoria = CATEGORIAS.find(c => c.nome === categoriaSelecionada);
       if (!categoria || !categoria.conteudo) {
@@ -151,6 +204,7 @@ export default function Home() {
       textoParaEnviar = conteudo.trim();
     }
 
+    // Reseta estados e inicia carregamento
     setCarregando(true);
     setErro('');
     setAviso('');
@@ -159,6 +213,7 @@ export default function Home() {
     setMostrarResultado(false);
 
     try {
+      // Faz a requisição para a API
       const resposta = await fetch('/api/generate-quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -174,6 +229,7 @@ export default function Home() {
         throw new Error(dados.erro || 'Erro ao gerar questões');
       }
 
+      // Atualiza o estado com as questões recebidas
       setQuestoes(dados.questoes);
       setRespostas({});
       if (dados.aviso) setAviso(dados.aviso);
@@ -184,12 +240,29 @@ export default function Home() {
     }
   };
 
-  // ===== RESPONDER QUESTÃO =====
+  // ============================================================
+  // FUNÇÃO: RESPONDER QUESTÃO
+  // ============================================================
+
+  /**
+   * responderQuestao
+   * Registra a resposta do usuário para uma questão específica
+   * @param indice - Índice da questão no array
+   * @param opcao - Letra da alternativa escolhida (A, B, C, D)
+   */
   const responderQuestao = (indice: number, opcao: string) => {
     setRespostas(prev => ({ ...prev, [indice]: opcao }));
   };
 
-  // ===== CALCULAR RESULTADO =====
+  // ============================================================
+  // FUNÇÃO: CALCULAR RESULTADO
+  // ============================================================
+
+  /**
+   * calcularResultado
+   * Compara as respostas do usuário com o gabarito
+   * @returns Número de acertos
+   */
   const calcularResultado = () => {
     let acertos = 0;
     questoes.forEach((q, i) => {
@@ -198,7 +271,14 @@ export default function Home() {
     return acertos;
   };
 
-  // ===== FINALIZAR PROVA =====
+  // ============================================================
+  // FUNÇÃO: FINALIZAR PROVA
+  // ============================================================
+
+  /**
+   * finalizarProva
+   * Verifica se todas as questões foram respondidas e mostra o resultado
+   */
   const finalizarProva = () => {
     const totalQuestoes = questoes.length;
     const respondidas = Object.keys(respostas).length;
@@ -212,7 +292,14 @@ export default function Home() {
     setErro('');
   };
 
-  // ===== REINICIAR =====
+  // ============================================================
+  // FUNÇÃO: REINICIAR
+  // ============================================================
+
+  /**
+   * reiniciar
+   * Reseta todos os estados para iniciar um novo simulado
+   */
   const reiniciar = () => {
     setQuestoes([]);
     setRespostas({});
@@ -222,19 +309,31 @@ export default function Home() {
     setAviso('');
   };
 
-  // ===== EXPORTAR PDF CORRIGIDO =====
+  // ============================================================
+  // FUNÇÃO: EXPORTAR PDF
+  // ============================================================
+
+  /**
+   * exportarPDF
+   * Gera um arquivo PDF com o resultado do simulado
+   * Usa jsPDF e html2canvas para criar o documento
+   */
   const exportarPDF = async () => {
     try {
       setErro('');
       
+      // Cria um novo documento PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210;
-      const pageHeight = 297;
-      const margin = 20;
+      const pageWidth = 210;        // Largura A4 em mm
+      const pageHeight = 297;       // Altura A4 em mm
+      const margin = 20;            // Margem de 2cm
       const contentWidth = pageWidth - (margin * 2);
       let y = margin;
       
-      // ===== FUNÇÃO PARA ADICIONAR RODAPÉ =====
+      /**
+       * addFooter
+       * Função interna para adicionar rodapé em todas as páginas
+       */
       const addFooter = () => {
         const totalPages = pdf.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
@@ -243,7 +342,7 @@ export default function Home() {
           pdf.setFont('helvetica', 'italic');
           pdf.setTextColor(150, 150, 150);
           pdf.text(
-            `Gerado com KZ AI - Página ${i} de ${totalPages}`,
+            `Criado por @kasemiro - Página ${i} de ${totalPages}`,
             pageWidth / 2,
             pageHeight - 10,
             { align: 'center' }
@@ -255,12 +354,12 @@ export default function Home() {
       // ===== CABEÇALHO =====
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Simulador de Estudos', pageWidth / 2, y, { align: 'center' });
+      pdf.text('Simulador de Prova', pageWidth / 2, y, { align: 'center' });
       y += 8;
       
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Desenvilvido por @Kasemiro', pageWidth / 2, y, { align: 'center' });
+      pdf.text('Criado por @kasemiro', pageWidth / 2, y, { align: 'center' });
       y += 10;
       
       pdf.setDrawColor(200, 200, 200);
@@ -307,16 +406,19 @@ export default function Home() {
         const respostaUsuario = respostas[i] || 'Não respondeu';
         const acertou = respostaUsuario === q.correta;
         
+        // Verifica se cabe na página atual, se não, adiciona nova página
         if (y > pageHeight - 40) {
           pdf.addPage();
           y = margin;
         }
         
+        // Número da questão
         pdf.setFontSize(11);
         pdf.setFont('helvetica', 'bold');
         pdf.text(`Questão ${i + 1}`, margin, y);
         y += 6;
         
+        // Enunciado - remove emojis e caracteres especiais que quebram o PDF
         let perguntaLimpa = q.pergunta
           .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
           .replace(/\s+/g, ' ')
@@ -328,6 +430,7 @@ export default function Home() {
         pdf.text(perguntaLines, margin, y);
         y += perguntaLines.length * 5 + 4;
         
+        // Alternativas
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
         const alternativas = ['A', 'B', 'C', 'D'];
@@ -336,17 +439,19 @@ export default function Home() {
           const isCorreta = letra === q.correta;
           const isMarcada = respostaUsuario === letra;
           
+          // Define estilo da alternativa (correta, marcada, ou normal)
           if (isCorreta) {
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(0, 150, 0);
+            pdf.setTextColor(0, 150, 0);        // Verde para correta
           } else if (isMarcada && !isCorreta) {
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(200, 0, 0);
+            pdf.setTextColor(200, 0, 0);        // Vermelho para errada
           } else {
             pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(0, 0, 0);
+            pdf.setTextColor(0, 0, 0);          // Preto para normal
           }
           
+          // Prefixos visuais
           let prefixo = '';
           if (isCorreta) prefixo = '✓ ';
           if (isMarcada && !isCorreta) prefixo = '✗ ';
@@ -360,12 +465,14 @@ export default function Home() {
         pdf.setTextColor(0, 0, 0);
         y += 2;
         
+        // Correta
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 150, 0);
         pdf.text(`Correta: ${q.correta}`, margin, y);
         y += 5;
         
+        // Explicação
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'italic');
         pdf.setTextColor(80, 80, 80);
@@ -379,6 +486,7 @@ export default function Home() {
         pdf.text(explicacaoLines, margin + 4, y);
         y += explicacaoLines.length * 4 + 4;
         
+        // Sua resposta
         pdf.setFont('helvetica', 'normal');
         pdf.setFontSize(9);
         const acertouText = acertou ? 'Acertou!' : 'Errou!';
@@ -394,6 +502,7 @@ export default function Home() {
         
         pdf.setTextColor(0, 0, 0);
         
+        // Linha separadora entre questões
         if (i < questoes.length - 1) {
           pdf.setDrawColor(220, 220, 220);
           pdf.line(margin, y, pageWidth - margin, y);
@@ -401,6 +510,7 @@ export default function Home() {
         }
       }
       
+      // Adiciona rodapé em todas as páginas
       addFooter();
       pdf.save('simulado.pdf');
       
@@ -410,12 +520,25 @@ export default function Home() {
     }
   };
 
-  // ===== CLASSES DARK MODE =====
+  // ============================================================
+  // CLASSES CONDICIONAIS - DARK MODE
+  // ============================================================
+
+  /** Classes CSS que mudam com base no modo escuro */
   const cardBg = darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white';
   const cardShadow = darkMode ? 'shadow-xl shadow-gray-900/30' : 'shadow-md';
   const inputBg = darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300';
   const hoverBg = darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50';
 
+  // ============================================================
+  // FUNÇÃO: HANDLE CATEGORIA CHANGE
+  // ============================================================
+
+  /**
+   * handleCategoriaChange
+   * Atualiza a categoria selecionada e altera o modo de entrada
+   * Se escolher "Escrever meu próprio conteúdo", muda para modo texto
+   */
   const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const valor = e.target.value;
     setCategoriaSelecionada(valor);
@@ -427,13 +550,27 @@ export default function Home() {
     }
   };
 
+  // ============================================================
+  // FUNÇÃO: VERIFICAR TODAS RESPONDIDAS
+  // ============================================================
+
+  /** Verifica se todas as questões foram respondidas */
   const todasRespondidas = questoes.length > 0 && Object.keys(respostas).length === questoes.length;
+
+  // ============================================================
+  // RENDERIZAÇÃO (JSX)
+  // ============================================================
 
   return (
     <main className="min-h-screen transition-colors duration-300">
-      {/* ===== HEADER ===== */}
+      
+      {/* ============================================================
+          HEADER - CABEÇALHO FIXO
+          ============================================================ */}
       <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
         <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+          
+          {/* Logo e título */}
           <div className="flex items-center gap-3">
             <div className="relative w-10 h-10">
               <Image
@@ -443,18 +580,19 @@ export default function Home() {
                 height={40}
                 className="object-contain"
                 onError={(e) => {
-                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.style.display = 'none';  // Esconde se a imagem não existir
                 }}
               />
             </div>
             <div>
               <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                📚 Simulador de Concurso
+                📚 Simulador de Prova
               </h1>
-              <span className="text-xs text-gray-500 dark:text-gray-400">com IA</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400"></span>
             </div>
           </div>
 
+          {/* Botão de alternar modo escuro */}
           <button
             onClick={() => setDarkMode(!darkMode)}
             className="p-2.5 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xl"
@@ -467,13 +605,16 @@ export default function Home() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
         
-        {/* ===== FORMULÁRIO ===== */}
+        {/* ============================================================
+            FORMULÁRIO - ÁREA DE ENTRADA
+            ============================================================ */}
         <div className={`${cardBg} ${cardShadow} rounded-2xl p-6 mb-8 transition-colors duration-300`}>
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
             1. Escolha uma categoria ou digite seu conteúdo
           </h2>
           
           <div className="space-y-4">
+            {/* Seletor de categoria */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 📂 Selecione uma categoria:
@@ -493,6 +634,7 @@ export default function Home() {
               </select>
             </div>
 
+            {/* Campo de texto personalizado (aparece apenas no modo texto) */}
             {modoEntrada === 'texto' && (
               <div className="animate-fade-in">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -517,6 +659,7 @@ export default function Home() {
               </div>
             )}
 
+            {/* Seletor de quantidade de questões */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Quantidade de questões:
@@ -539,6 +682,7 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Botão gerar simulado */}
             <button
               onClick={handleGerarSimulado}
               disabled={carregando || 
@@ -555,6 +699,7 @@ export default function Home() {
               )}
             </button>
 
+            {/* Mensagens de erro e aviso */}
             {erro && (
               <div className="p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl">
                 ⚠️ {erro}
@@ -568,9 +713,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ===== QUESTÕES ===== */}
+        {/* ============================================================
+            QUESTÕES - LISTA DE QUESTÕES PARA RESPONDER
+            ============================================================ */}
         {questoes.length > 0 && !mostrarResultado && (
           <div className="space-y-4">
+            {/* Barra de progresso */}
             <div className={`${cardBg} ${cardShadow} rounded-2xl p-4 sticky top-[72px] z-10 transition-colors duration-300`}>
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
@@ -585,6 +733,7 @@ export default function Home() {
                   </button>
                 )}
               </div>
+              {/* Barra de progresso visual */}
               <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
                 <div 
                   className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-500 rounded-full"
@@ -598,6 +747,7 @@ export default function Home() {
               )}
             </div>
 
+            {/* Lista de questões */}
             {questoes.map((q, indice) => (
               <div key={indice} className={`${cardBg} ${cardShadow} rounded-2xl p-6 transition-colors duration-300`}>
                 <div className="flex justify-between items-start mb-3">
@@ -612,6 +762,7 @@ export default function Home() {
                 </div>
                 <p className="mb-4 text-gray-800 dark:text-gray-200">{q.pergunta}</p>
                 
+                {/* Alternativas */}
                 <div className="space-y-2">
                   {['A', 'B', 'C', 'D'].map((letra) => (
                     <label 
@@ -638,6 +789,7 @@ export default function Home() {
               </div>
             ))}
 
+            {/* Botão finalizar no final da página */}
             {todasRespondidas && (
               <div className="flex justify-center mt-6 animate-fade-in">
                 <button
@@ -651,10 +803,13 @@ export default function Home() {
           </div>
         )}
 
-        {/* ===== RESULTADO ===== */}
+        {/* ============================================================
+            RESULTADO - EXIBIÇÃO DO GABARITO E PONTUAÇÃO
+            ============================================================ */}
         {mostrarResultado && (
           <div className={`${cardBg} ${cardShadow} rounded-2xl p-6 mt-8 transition-colors duration-300`}>
             <div id="conteudo-para-pdf">
+              {/* Título e pontuação */}
               <h2 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">
                 🏆 Resultado Final
               </h2>
@@ -675,51 +830,85 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Gabarito comentado */}
               <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">📖 Gabarito Comentado</h3>
-              <div className="space-y-4 max-h-96 overflow-y-auto">
+              <div className="space-y-6 max-h-96 overflow-y-auto">
                 {questoes.map((q, i) => {
                   const respostaUsuario = respostas[i] || 'Não respondeu';
                   const acertou = respostaUsuario === q.correta;
                   
                   return (
                     <div key={i} className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} pb-4`}>
-                      <p className="font-semibold text-gray-900 dark:text-gray-100">
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
                         {i+1}. {q.pergunta}
                       </p>
-                      <div className="mt-2 space-y-1">
+                      
+                      {/* Alternativas com cores indicativas */}
+                      <div className="mt-2 space-y-1.5">
                         {['A', 'B', 'C', 'D'].map((letra) => {
                           const isCorreta = letra === q.correta;
                           const isMarcada = respostaUsuario === letra;
                           
                           let cor = 'text-gray-600 dark:text-gray-400';
-                          if (isCorreta) cor = 'text-green-600 dark:text-green-400 font-bold';
-                          if (isMarcada && !isCorreta) cor = 'text-red-600 dark:text-red-400 font-bold';
+                          let bgCor = '';
+                          let borda = '';
+                          
+                          // Define estilo visual baseado no status da alternativa
+                          if (isCorreta && isMarcada) {
+                            cor = 'text-green-700 dark:text-green-300';
+                            bgCor = 'bg-green-50 dark:bg-green-900/20';
+                            borda = 'border-green-500 dark:border-green-400';
+                          } else if (isCorreta) {
+                            cor = 'text-green-700 dark:text-green-300';
+                            bgCor = 'bg-green-50 dark:bg-green-900/10';
+                            borda = 'border-green-500 dark:border-green-400';
+                          } else if (isMarcada && !isCorreta) {
+                            cor = 'text-red-700 dark:text-red-300';
+                            bgCor = 'bg-red-50 dark:bg-red-900/20';
+                            borda = 'border-red-500 dark:border-red-400';
+                          }
                           
                           return (
-                            <p key={letra} className={`text-sm ${cor}`}>
-                              {isCorreta && '✅ '}
-                              {isMarcada && !isCorreta && '❌ '}
-                              {letra}) {q.opcoes[letra as keyof typeof q.opcoes]}
-                              {isMarcada && ' ← Sua resposta'}
-                            </p>
+                            <div 
+                              key={letra} 
+                              className={`flex items-center gap-3 p-2.5 rounded-lg border ${borda} ${bgCor} transition-colors duration-200`}
+                            >
+                              <span className={`font-bold ${cor}`}>{letra})</span>
+                              <span className={cor}>{q.opcoes[letra as keyof typeof q.opcoes]}</span>
+                              {isMarcada && !isCorreta && (
+                                <span className="ml-auto text-sm text-red-600 dark:text-red-400 font-medium">
+                                  ❌ Sua resposta
+                                </span>
+                              )}
+                              {isCorreta && (
+                                <span className="ml-auto text-sm text-green-600 dark:text-green-400 font-medium">
+                                  ✅ Correta
+                                </span>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
-                      <p className="text-green-600 dark:text-green-400 mt-2 font-medium">
-                        ✅ Correta: {q.correta}
-                      </p>
-                      <p className="text-gray-700 dark:text-gray-300 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-xl">
-                        💡 {q.explicacao}
-                      </p>
-                      <p className={`text-sm mt-1 ${acertou ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {acertou ? '✅ Você acertou!' : '❌ Você errou. A resposta correta é ' + q.correta}
-                      </p>
+                      
+                      {/* Informações adicionais */}
+                      <div className="mt-3 space-y-1">
+                        <p className="text-green-600 dark:text-green-400 font-medium">
+                          ✅ Correta: {q.correta}
+                        </p>
+                        <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-xl">
+                          💡 {q.explicacao}
+                        </p>
+                        <p className={`text-sm font-medium ${acertou ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {acertou ? '✅ Você acertou!' : `❌ Você errou. A resposta correta é ${q.correta}`}
+                        </p>
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
+            {/* Botões de ação */}
             <div className="space-y-3 mt-6">
               <button
                 onClick={exportarPDF}
@@ -737,9 +926,11 @@ export default function Home() {
           </div>
         )}
 
-        {/* ===== RODAPÉ ===== */}
+        {/* ============================================================
+            RODAPÉ
+            ============================================================ */}
         <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Gerado com ❤️ por KASEMIRO </p>
+          <p>Gerado com ❤️ usando KZ AI</p>
         </div>
       </div>
     </main>
