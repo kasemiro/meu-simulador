@@ -375,9 +375,7 @@ const exportarPDF = () => {
       
       const alternativas = ['A', 'B', 'C', 'D'];
       for (const letra of alternativas) {
-        const texto = `${letra}) ${q.opcoes[letra as keyof typeof q.opcoes]}`;
-        const isCorreta = letra === q.correta;
-        const isMarcada = respostaUsuario === letra;
+        const texto = `${letra}) ${q.opcoes[letra]}`;
         
         // ===== DEFINE A COR (SEM ALTERAR A FONTE) =====
         if (isCorreta) {
@@ -389,13 +387,9 @@ const exportarPDF = () => {
         }
         
         // ===== TEXTO COM INDICADOR =====
-        let prefixo = '';
-        if (isCorreta) prefixo = '✓ ';
-        if (isMarcada && !isCorreta) prefixo = '✗ ';
         
-        const lineText = prefixo + texto;
-        const lines = pdf.splitTextToSize(lineText, contentWidth - 4);
-        pdf.text(lines, margin + 4, y);
+        const lines = pdf.splitTextToSize(texto, contentWidth);
+        pdf.text(lines, margin, y);
         y += lines.length * 5 + 1;
       }
       
