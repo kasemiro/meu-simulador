@@ -155,6 +155,7 @@ export default function Home() {
     setErro('');
     setAviso('');
     setQuestoes([]);
+    setRespostas({});
     setMostrarResultado(false);
 
     try {
@@ -183,10 +184,12 @@ export default function Home() {
     }
   };
 
+  // ===== RESPONDER QUESTÃO =====
   const responderQuestao = (indice: number, opcao: string) => {
     setRespostas(prev => ({ ...prev, [indice]: opcao }));
   };
 
+  // ===== CALCULAR RESULTADO =====
   const calcularResultado = () => {
     let acertos = 0;
     questoes.forEach((q, i) => {
@@ -195,15 +198,23 @@ export default function Home() {
     return acertos;
   };
 
+  // ===== FINALIZAR PROVA =====
   const finalizarProva = () => {
-    if (Object.keys(respostas).length < questoes.length) {
-      setErro(`Responda todas as ${questoes.length} questões!`);
+    // Verifica se todas as questões foram respondidas
+    const totalQuestoes = questoes.length;
+    const respondidas = Object.keys(respostas).length;
+    
+    if (respondidas < totalQuestoes) {
+      setErro(`⚠️ Você respondeu apenas ${respondidas} de ${totalQuestoes} questões! Responda todas para ver o resultado.`);
       return;
     }
+    
+    // Mostra o resultado
     setMostrarResultado(true);
     setErro('');
   };
 
+  // ===== REINICIAR =====
   const reiniciar = () => {
     setQuestoes([]);
     setRespostas({});
@@ -213,6 +224,7 @@ export default function Home() {
     setAviso('');
   };
 
+  // ===== EXPORTAR PDF =====
   const exportarPDF = async () => {
     const element = document.getElementById('conteudo-para-pdf');
     if (!element) return;
@@ -247,15 +259,13 @@ export default function Home() {
     }
   };
 
-  const ultimaRespondida = questoes.length > 0 && 
-    respostas[questoes.length - 1] !== undefined;
-
   // ===== CLASSES DARK MODE =====
   const cardBg = darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white';
   const cardShadow = darkMode ? 'shadow-xl shadow-gray-900/30' : 'shadow-md';
   const inputBg = darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300';
   const hoverBg = darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50';
 
+  // ===== HANDLE CATEGORIA CHANGE =====
   const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const valor = e.target.value;
     setCategoriaSelecionada(valor);
@@ -266,6 +276,9 @@ export default function Home() {
       setModoEntrada('categoria');
     }
   };
+
+  // ===== VERIFICA SE TODAS FORAM RESPONDIDAS =====
+  const todasRespondidas = questoes.length > 0 && Object.keys(respostas).length === questoes.length;
 
   return (
     <main className="min-h-screen transition-colors duration-300">
@@ -413,25 +426,48 @@ export default function Home() {
         {/* ===== QUESTÕES ===== */}
         {questoes.length > 0 && !mostrarResultado && (
           <div className="space-y-4">
-            <div className={`${cardBg} ${cardShadow} rounded-2xl p-4 flex justify-between items-center sticky top-[72px] z-10 transition-colors duration-300`}>
-              <span className="font-semibold text-gray-900 dark:text-gray-100">
-                📝 {Object.keys(respostas).length} de {questoes.length}
-              </span>
-              {Object.keys(respostas).length === questoes.length && (
-                <button
-                  onClick={finalizarProva}
-                  className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-6 py-2 rounded-xl transition-all duration-200"
-                >
-                  ✅ Finalizar Prova
-                </button>
+            {/* BARRA DE PROGRESSO */}
+            <div className={`${cardBg} ${cardShadow} rounded-2xl p-4 sticky top-[72px] z-10 transition-colors duration-300`}>
+              <div className="flex justify-between items-center">
+                <span className="font-semibold text-gray-900 dark:text-gray-100">
+                  📝 {Object.keys(respostas).length} de {questoes.length} respondidas
+                </span>
+                {todasRespondidas && (
+                  <button
+                    onClick={finalizarProva}
+                    className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-6 py-2 rounded-xl transition-all duration-200 animate-fade-in"
+                  >
+                    ✅ Ver Resultado
+                  </button>
+                )}
+              </div>
+              {/* BARRA DE PROGRESSO VISUAL */}
+              <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
+                <div 
+                  className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-500 rounded-full"
+                  style={{ width: `${(Object.keys(respostas).length / questoes.length) * 100}%` }}
+                />
+              </div>
+              {!todasRespondidas && Object.keys(respostas).length > 0 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  ⚠️ Responda todas as {questoes.length} questões para ver o resultado
+                </p>
               )}
             </div>
 
+            {/* LISTA DE QUESTÕES */}
             {questoes.map((q, indice) => (
               <div key={indice} className={`${cardBg} ${cardShadow} rounded-2xl p-6 transition-colors duration-300`}>
-                <h3 className="font-bold text-lg mb-3 text-blue-600 dark:text-blue-400">
-                  Questão {indice + 1}
-                </h3>
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="font-bold text-lg text-blue-600 dark:text-blue-400">
+                    Questão {indice + 1}
+                  </h3>
+                  {respostas[indice] && (
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
+                      Respondida
+                    </span>
+                  )}
+                </div>
                 <p className="mb-4 text-gray-800 dark:text-gray-200">{q.pergunta}</p>
                 
                 <div className="space-y-2">
@@ -460,13 +496,14 @@ export default function Home() {
               </div>
             ))}
 
-            {Object.keys(respostas).length === questoes.length && (
-              <div className="flex justify-center mt-4">
+            {/* BOTÃO FINALIZAR NO FINAL */}
+            {todasRespondidas && (
+              <div className="flex justify-center mt-6 animate-fade-in">
                 <button
                   onClick={finalizarProva}
-                  className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-8 py-3 rounded-2xl text-lg font-semibold transition-all duration-200"
+                  className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-8 py-4 rounded-2xl text-xl font-semibold transition-all duration-200 shadow-lg shadow-green-600/30"
                 >
-                  ✅ Finalizar Prova
+                  ✅ Ver Resultado Final
                 </button>
               </div>
             )}
@@ -497,35 +534,48 @@ export default function Home() {
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">📖 Gabarito</h3>
+              <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">📖 Gabarito Comentado</h3>
               <div className="space-y-4 max-h-96 overflow-y-auto">
-                {questoes.map((q, i) => (
-                  <div key={i} className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">
-                      {i+1}. {q.pergunta}
-                    </p>
-                    <div className="mt-2 space-y-1">
-                      {['A', 'B', 'C', 'D'].map((letra) => (
-                        <p key={letra} className={`text-sm ${
-                          letra === q.correta ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-600 dark:text-gray-400'
-                        }`}>
-                          {letra === q.correta && '✅ '}
-                          {letra}) {q.opcoes[letra as keyof typeof q.opcoes]}
-                        </p>
-                      ))}
+                {questoes.map((q, i) => {
+                  const respostaUsuario = respostas[i] || 'Não respondeu';
+                  const acertou = respostaUsuario === q.correta;
+                  
+                  return (
+                    <div key={i} className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} pb-4`}>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100">
+                        {i+1}. {q.pergunta}
+                      </p>
+                      <div className="mt-2 space-y-1">
+                        {['A', 'B', 'C', 'D'].map((letra) => {
+                          const isCorreta = letra === q.correta;
+                          const isMarcada = respostaUsuario === letra;
+                          
+                          let cor = 'text-gray-600 dark:text-gray-400';
+                          if (isCorreta) cor = 'text-green-600 dark:text-green-400 font-bold';
+                          if (isMarcada && !isCorreta) cor = 'text-red-600 dark:text-red-400 font-bold';
+                          
+                          return (
+                            <p key={letra} className={`text-sm ${cor}`}>
+                              {isCorreta && '✅ '}
+                              {isMarcada && !isCorreta && '❌ '}
+                              {letra}) {q.opcoes[letra as keyof typeof q.opcoes]}
+                              {isMarcada && ' ← Sua resposta'}
+                            </p>
+                          );
+                        })}
+                      </div>
+                      <p className="text-green-600 dark:text-green-400 mt-2 font-medium">
+                        ✅ Correta: {q.correta}
+                      </p>
+                      <p className="text-gray-700 dark:text-gray-300 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-xl">
+                        💡 {q.explicacao}
+                      </p>
+                      <p className={`text-sm mt-1 ${acertou ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {acertou ? '✅ Você acertou!' : '❌ Você errou. A resposta correta é ' + q.correta}
+                      </p>
                     </div>
-                    <p className="text-green-600 dark:text-green-400 mt-2 font-medium">
-                      ✅ Correta: {q.correta}
-                    </p>
-                    <p className="text-gray-700 dark:text-gray-300 mt-1 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-xl">
-                      💡 {q.explicacao}
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      Sua resposta: {respostas[i] || 'Não respondeu'} 
-                      {respostas[i] === q.correta ? ' ✅' : ' ❌'}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
