@@ -12,7 +12,6 @@
 import { useState, useEffect } from 'react';        // Gerenciamento de estado e efeitos
 import Image from 'next/image';                      // Componente de imagem otimizado do Next
 import jsPDF from 'jspdf';                           // Biblioteca para gerar PDF
-import html2canvas from 'html2canvas';              // Converte HTML para imagem (usado no PDF)
 
 // ============================================================
 // TIPOS (TypeScript)
