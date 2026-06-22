@@ -18,7 +18,7 @@ type Questao = {
   explicacao: string;
 };
 
-// ===== CATEGORIAS =====
+// ===== CATEGORIAS COM CONTEÚDO PRÉ-DEFINIDO =====
 const CATEGORIAS = [
   {
     nome: '📚 Língua Portuguesa',
@@ -184,10 +184,12 @@ export default function Home() {
     }
   };
 
+  // ===== RESPONDER QUESTÃO =====
   const responderQuestao = (indice: number, opcao: string) => {
     setRespostas(prev => ({ ...prev, [indice]: opcao }));
   };
 
+  // ===== CALCULAR RESULTADO =====
   const calcularResultado = () => {
     let acertos = 0;
     questoes.forEach((q, i) => {
@@ -196,12 +198,13 @@ export default function Home() {
     return acertos;
   };
 
+  // ===== FINALIZAR PROVA =====
   const finalizarProva = () => {
     const totalQuestoes = questoes.length;
     const respondidas = Object.keys(respostas).length;
     
     if (respondidas < totalQuestoes) {
-      setErro(`⚠️ Você respondeu apenas ${respondidas} de ${totalQuestoes} questões!`);
+      setErro(`⚠️ Você respondeu apenas ${respondidas} de ${totalQuestoes} questões! Responda todas para ver o resultado.`);
       return;
     }
     
@@ -209,6 +212,7 @@ export default function Home() {
     setErro('');
   };
 
+  // ===== REINICIAR =====
   const reiniciar = () => {
     setQuestoes([]);
     setRespostas({});
@@ -218,21 +222,20 @@ export default function Home() {
     setAviso('');
   };
 
-  // ===== EXPORTAR PDF MELHORADO =====
+  // ===== EXPORTAR PDF CORRIGIDO =====
   const exportarPDF = async () => {
     try {
       setErro('');
       
       // Cria um novo PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210; // A4 largura em mm
-      const pageHeight = 297; // A4 altura em mm
-      const margin = 25; // Margem de 2.5cm
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 25;
       const contentWidth = pageWidth - (margin * 2);
       let y = margin;
       
       // ===== FONTES =====
-      // jsPDF não suporta Arial nativamente, usamos Helvetica (sans-serif)
       pdf.setFont('helvetica');
       
       // ===== CABEÇALHO =====
@@ -296,17 +299,15 @@ export default function Home() {
           y = margin;
         }
         
-        // Número da questão (negrito)
+        // Número da questão
         pdf.setFontSize(11);
         pdf.setFont('helvetica', 'bold');
         pdf.text(`Questão ${i + 1}`, margin, y);
         y += 6;
         
-        // Enunciado (normal)
+        // Enunciado
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
-        
-        // Quebra o enunciado em várias linhas se necessário
         const perguntaLines = pdf.splitTextToSize(q.pergunta, contentWidth);
         pdf.text(perguntaLines, margin, y);
         y += perguntaLines.length * 5 + 4;
@@ -323,13 +324,13 @@ export default function Home() {
           // Define estilo
           if (isCorreta) {
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(0, 150, 0); // Verde
+            pdf.setTextColor(0, 150, 0);
           } else if (isMarcada && !isCorreta) {
             pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(200, 0, 0); // Vermelho
+            pdf.setTextColor(200, 0, 0);
           } else {
             pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(0, 0, 0); // Preto
+            pdf.setTextColor(0, 0, 0);
           }
           
           // Adiciona indicadores
@@ -362,10 +363,16 @@ export default function Home() {
         pdf.text(explicacaoLines, margin + 2, y);
         y += explicacaoLines.length * 4 + 4;
         
-        // Sua resposta
+        // Sua resposta - CORRIGIDO
         pdf.setFont('helvetica', 'normal');
         const acertouText = acertou ? '✅ Acertou!' : '❌ Errou!';
-        pdf.setTextColor(acertou ? 0 : 150 : 150, acertou ? 150 : 0, 0);
+        
+        if (acertou) {
+          pdf.setTextColor(0, 150, 0);
+        } else {
+          pdf.setTextColor(200, 0, 0);
+        }
+        
         pdf.text(`Sua resposta: ${respostaUsuario} - ${acertouText}`, margin, y);
         y += 8;
         
@@ -395,7 +402,6 @@ export default function Home() {
         pdf.setTextColor(0, 0, 0);
       }
       
-      // Salva o PDF
       pdf.save('simulado.pdf');
       
     } catch (error) {
@@ -410,6 +416,7 @@ export default function Home() {
   const inputBg = darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300';
   const hoverBg = darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50';
 
+  // ===== HANDLE CATEGORIA CHANGE =====
   const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const valor = e.target.value;
     setCategoriaSelecionada(valor);
@@ -421,6 +428,7 @@ export default function Home() {
     }
   };
 
+  // ===== VERIFICA SE TODAS FORAM RESPONDIDAS =====
   const todasRespondidas = questoes.length > 0 && Object.keys(respostas).length === questoes.length;
 
   return (
@@ -468,6 +476,7 @@ export default function Home() {
           </h2>
           
           <div className="space-y-4">
+            {/* CATEGORIA */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 📂 Selecione uma categoria:
@@ -487,6 +496,7 @@ export default function Home() {
               </select>
             </div>
 
+            {/* CAMPO DE TEXTO PERSONALIZADO */}
             {modoEntrada === 'texto' && (
               <div className="animate-fade-in">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
@@ -511,6 +521,7 @@ export default function Home() {
               </div>
             )}
 
+            {/* QUANTIDADE */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Quantidade de questões:
@@ -533,6 +544,7 @@ export default function Home() {
               </div>
             </div>
 
+            {/* BOTÃO GERAR */}
             <button
               onClick={handleGerarSimulado}
               disabled={carregando || 
@@ -565,6 +577,7 @@ export default function Home() {
         {/* ===== QUESTÕES ===== */}
         {questoes.length > 0 && !mostrarResultado && (
           <div className="space-y-4">
+            {/* BARRA DE PROGRESSO */}
             <div className={`${cardBg} ${cardShadow} rounded-2xl p-4 sticky top-[72px] z-10 transition-colors duration-300`}>
               <div className="flex justify-between items-center">
                 <span className="font-semibold text-gray-900 dark:text-gray-100">
@@ -579,6 +592,7 @@ export default function Home() {
                   </button>
                 )}
               </div>
+              {/* BARRA DE PROGRESSO VISUAL */}
               <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
                 <div 
                   className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-500 rounded-full"
@@ -592,6 +606,7 @@ export default function Home() {
               )}
             </div>
 
+            {/* LISTA DE QUESTÕES */}
             {questoes.map((q, indice) => (
               <div key={indice} className={`${cardBg} ${cardShadow} rounded-2xl p-6 transition-colors duration-300`}>
                 <div className="flex justify-between items-start mb-3">
@@ -632,6 +647,7 @@ export default function Home() {
               </div>
             ))}
 
+            {/* BOTÃO FINALIZAR NO FINAL */}
             {todasRespondidas && (
               <div className="flex justify-center mt-6 animate-fade-in">
                 <button
