@@ -314,211 +314,211 @@ export default function Home() {
   // ============================================================
 
   /**
-   * exportarPDF
-   * Gera um arquivo PDF com o resultado do simulado
-   * Usa jsPDF e html2canvas para criar o documento
-   */
-  const exportarPDF = async () => {
-    try {
-      setErro('');
+ * exportarPDF
+ * Gera um arquivo PDF com o resultado do simulado usando apenas jsPDF
+ * Não depende de html2canvas, evitando problemas de renderização
+ */
+const exportarPDF = async () => {
+  try {
+    setErro('');
+    
+    // Cria um novo documento PDF
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = 210;
+    const pageHeight = 297;
+    const margin = 20;
+    const contentWidth = pageWidth - (margin * 2);
+    let y = margin;
+    
+    /**
+     * addFooter - Adiciona rodapé em todas as páginas
+     */
+    const addFooter = () => {
+      const totalPages = pdf.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(150, 150, 150);
+        pdf.text(
+          `Gerado com DeepSeek AI - Página ${i} de ${totalPages}`,
+          pageWidth / 2,
+          pageHeight - 10,
+          { align: 'center' }
+        );
+        pdf.setTextColor(0, 0, 0);
+      }
+    };
+    
+    // ===== CABEÇALHO =====
+    pdf.setFontSize(18);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
+    y += 8;
+    
+    pdf.setFontSize(10);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text('Gerado por IA com DeepSeek', pageWidth / 2, y, { align: 'center' });
+    y += 10;
+    
+    pdf.setDrawColor(200, 200, 200);
+    pdf.line(margin, y, pageWidth - margin, y);
+    y += 10;
+    
+    // ===== RESULTADO =====
+    const acertos = calcularResultado();
+    const total = questoes.length;
+    const percentual = total > 0 ? Math.round((acertos / total) * 100) : 0;
+    
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('RESULTADO FINAL', pageWidth / 2, y, { align: 'center' });
+    y += 8;
+    
+    pdf.setFontSize(22);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(`${acertos} / ${total}`, pageWidth / 2, y, { align: 'center' });
+    y += 8;
+    
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`${percentual}% de acertos`, pageWidth / 2, y, { align: 'center' });
+    y += 6;
+    
+    const status = percentual >= 70 ? 'APROVADO!' : 'Continue estudando!';
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(status, pageWidth / 2, y, { align: 'center' });
+    y += 12;
+    
+    pdf.line(margin, y, pageWidth - margin, y);
+    y += 10;
+    
+    // ===== GABARITO =====
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
+    y += 10;
+    
+    // ===== PERCORRE TODAS AS QUESTÕES =====
+    for (let i = 0; i < questoes.length; i++) {
+      const q = questoes[i];
+      const respostaUsuario = respostas[i] || 'Não respondeu';
+      const acertou = respostaUsuario === q.correta;
       
-      // Cria um novo documento PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210;        // Largura A4 em mm
-      const pageHeight = 297;       // Altura A4 em mm
-      const margin = 20;            // Margem de 2cm
-      const contentWidth = pageWidth - (margin * 2);
-      let y = margin;
+      // Verifica se cabe na página
+      if (y > pageHeight - 50) {
+        pdf.addPage();
+        y = margin;
+      }
       
-      /**
-       * addFooter
-       * Função interna para adicionar rodapé em todas as páginas
-       */
-      const addFooter = () => {
-        const totalPages = pdf.getNumberOfPages();
-        for (let i = 1; i <= totalPages; i++) {
-          pdf.setPage(i);
-          pdf.setFontSize(8);
-          pdf.setFont('helvetica', 'italic');
-          pdf.setTextColor(150, 150, 150);
-          pdf.text(
-            `Criado por @kasemiro - Página ${i} de ${totalPages}`,
-            pageWidth / 2,
-            pageHeight - 10,
-            { align: 'center' }
-          );
-          pdf.setTextColor(0, 0, 0);
-        }
-      };
-      
-      // ===== CABEÇALHO =====
-      pdf.setFontSize(18);
+      // Número da questão
+      pdf.setFontSize(11);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Simulador de Prova', pageWidth / 2, y, { align: 'center' });
-      y += 8;
+      pdf.text(`Questão ${i + 1}`, margin, y);
+      y += 6;
+      
+      // Enunciado - remove emojis
+      let perguntaLimpa = q.pergunta
+        .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
       
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Criado por @kasemiro', pageWidth / 2, y, { align: 'center' });
-      y += 10;
+      const perguntaLines = pdf.splitTextToSize(perguntaLimpa, contentWidth);
+      pdf.text(perguntaLines, margin, y);
+      y += perguntaLines.length * 5 + 4;
       
-      pdf.setDrawColor(200, 200, 200);
-      pdf.line(margin, y, pageWidth - margin, y);
-      y += 10;
-      
-      // ===== RESULTADO =====
-      const acertos = calcularResultado();
-      const total = questoes.length;
-      const percentual = Math.round((acertos / total) * 100);
-      
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('RESULTADO FINAL', pageWidth / 2, y, { align: 'center' });
-      y += 8;
-      
-      pdf.setFontSize(22);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(`${acertos} / ${total}`, pageWidth / 2, y, { align: 'center' });
-      y += 8;
-      
-      pdf.setFontSize(12);
+      // Alternativas
+      pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`${percentual}% de acertos`, pageWidth / 2, y, { align: 'center' });
-      y += 6;
-      
-      const status = percentual >= 70 ? 'APROVADO!' : 'Continue estudando!';
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(status, pageWidth / 2, y, { align: 'center' });
-      y += 12;
-      
-      pdf.line(margin, y, pageWidth - margin, y);
-      y += 10;
-      
-      // ===== GABARITO =====
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
-      y += 10;
-      
-      // ===== QUESTÕES =====
-      for (let i = 0; i < questoes.length; i++) {
-        const q = questoes[i];
-        const respostaUsuario = respostas[i] || 'Não respondeu';
-        const acertou = respostaUsuario === q.correta;
+      const alternativas = ['A', 'B', 'C', 'D'];
+      for (const letra of alternativas) {
+        const texto = `${letra}) ${q.opcoes[letra as keyof typeof q.opcoes]}`;
+        const isCorreta = letra === q.correta;
+        const isMarcada = respostaUsuario === letra;
         
-        // Verifica se cabe na página atual, se não, adiciona nova página
-        if (y > pageHeight - 40) {
-          pdf.addPage();
-          y = margin;
-        }
-        
-        // Número da questão
-        pdf.setFontSize(11);
-        pdf.setFont('helvetica', 'bold');
-        pdf.text(`Questão ${i + 1}`, margin, y);
-        y += 6;
-        
-        // Enunciado - remove emojis e caracteres especiais que quebram o PDF
-        let perguntaLimpa = q.pergunta
-          .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        const perguntaLines = pdf.splitTextToSize(perguntaLimpa, contentWidth);
-        pdf.text(perguntaLines, margin, y);
-        y += perguntaLines.length * 5 + 4;
-        
-        // Alternativas
-        pdf.setFontSize(10);
-        pdf.setFont('helvetica', 'normal');
-        const alternativas = ['A', 'B', 'C', 'D'];
-        for (const letra of alternativas) {
-          const texto = `${letra}) ${q.opcoes[letra as keyof typeof q.opcoes]}`;
-          const isCorreta = letra === q.correta;
-          const isMarcada = respostaUsuario === letra;
-          
-          // Define estilo da alternativa (correta, marcada, ou normal)
-          if (isCorreta) {
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(0, 150, 0);        // Verde para correta
-          } else if (isMarcada && !isCorreta) {
-            pdf.setFont('helvetica', 'bold');
-            pdf.setTextColor(200, 0, 0);        // Vermelho para errada
-          } else {
-            pdf.setFont('helvetica', 'normal');
-            pdf.setTextColor(0, 0, 0);          // Preto para normal
-          }
-          
-          // Prefixos visuais
-          let prefixo = '';
-          if (isCorreta) prefixo = '✓ ';
-          if (isMarcada && !isCorreta) prefixo = '✗ ';
-          
-          const lineText = prefixo + texto;
-          const lines = pdf.splitTextToSize(lineText, contentWidth - 4);
-          pdf.text(lines, margin + 4, y);
-          y += lines.length * 5 + 1;
-        }
-        
-        pdf.setTextColor(0, 0, 0);
-        y += 2;
-        
-        // Correta
-        pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(0, 150, 0);
-        pdf.text(`Correta: ${q.correta}`, margin, y);
-        y += 5;
-        
-        // Explicação
-        pdf.setFontSize(9);
-        pdf.setFont('helvetica', 'italic');
-        pdf.setTextColor(80, 80, 80);
-        
-        let explicacaoLimpa = q.explicacao
-          .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        const explicacaoLines = pdf.splitTextToSize(explicacaoLimpa, contentWidth - 4);
-        pdf.text(explicacaoLines, margin + 4, y);
-        y += explicacaoLines.length * 4 + 4;
-        
-        // Sua resposta
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(9);
-        const acertouText = acertou ? 'Acertou!' : 'Errou!';
-        
-        if (acertou) {
+        // Define estilo
+        if (isCorreta) {
+          pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(0, 150, 0);
-        } else {
+        } else if (isMarcada && !isCorreta) {
+          pdf.setFont('helvetica', 'bold');
           pdf.setTextColor(200, 0, 0);
+        } else {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(0, 0, 0);
         }
         
-        pdf.text(`Sua resposta: ${respostaUsuario} - ${acertouText}`, margin, y);
-        y += 8;
+        let prefixo = '';
+        if (isCorreta) prefixo = '✓ ';
+        if (isMarcada && !isCorreta) prefixo = '✗ ';
         
-        pdf.setTextColor(0, 0, 0);
-        
-        // Linha separadora entre questões
-        if (i < questoes.length - 1) {
-          pdf.setDrawColor(220, 220, 220);
-          pdf.line(margin, y, pageWidth - margin, y);
-          y += 6;
-        }
+        const lineText = prefixo + texto;
+        const lines = pdf.splitTextToSize(lineText, contentWidth - 4);
+        pdf.text(lines, margin + 4, y);
+        y += lines.length * 5 + 1;
       }
       
-      // Adiciona rodapé em todas as páginas
-      addFooter();
-      pdf.save('simulado.pdf');
+      pdf.setTextColor(0, 0, 0);
+      y += 2;
       
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      setErro('Erro ao gerar PDF. Tente novamente.');
+      // Correta
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(0, 150, 0);
+      pdf.text(`Correta: ${q.correta}`, margin, y);
+      y += 5;
+      
+      // Explicação
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'italic');
+      pdf.setTextColor(80, 80, 80);
+      
+      let explicacaoLimpa = q.explicacao
+        .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      const explicacaoLines = pdf.splitTextToSize(explicacaoLimpa, contentWidth - 4);
+      pdf.text(explicacaoLines, margin + 4, y);
+      y += explicacaoLines.length * 4 + 4;
+      
+      // Sua resposta
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      const acertouText = acertou ? 'Acertou!' : 'Errou!';
+      
+      if (acertou) {
+        pdf.setTextColor(0, 150, 0);
+      } else {
+        pdf.setTextColor(200, 0, 0);
+      }
+      
+      pdf.text(`Sua resposta: ${respostaUsuario} - ${acertouText}`, margin, y);
+      y += 8;
+      
+      pdf.setTextColor(0, 0, 0);
+      
+      // Linha separadora
+      if (i < questoes.length - 1) {
+        pdf.setDrawColor(220, 220, 220);
+        pdf.line(margin, y, pageWidth - margin, y);
+        y += 6;
+      }
     }
-  };
+    
+    // Adiciona rodapé
+    addFooter();
+    
+    // Salva o PDF
+    pdf.save('simulado.pdf');
+    
+  } catch (error) {
+    console.error('Erro ao gerar PDF:', error);
+    setErro('Erro ao gerar PDF. Tente novamente.');
+  }
+};
 
   // ============================================================
   // CLASSES CONDICIONAIS - DARK MODE
