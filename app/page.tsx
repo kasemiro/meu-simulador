@@ -34,43 +34,47 @@ const CATEGORIAS = [
     nome: '📚 Língua Portuguesa',
     conteudo: `Língua Portuguesa para concursos públicos:
 
-1. Interpretação de Texto: A princípio, interpretação de texto é o carro-chefe das provas de Português. Ou seja, muitas questões giram em torno da sua capacidade de compreender e analisar textos. Além disso, as bancas cobram a identificação de ideias centrais, inferências e temas implícitos. Portanto, praticar com textos variados e questões de provas anteriores é fundamental.
+    1. Interpretação de Texto: A princípio, a interpretação de texto envolve análise e compreensão, considerando a palavra e seu significado (sinonímia, antonímia e ambiguidade). Além disso, os níveis da significação (denotação e conotação) e as figuras de linguagem são amplamente cobrados. Portanto, praticar com textos variados é essencial.
 
-2. Ortografia e Acentuação: Agora, o uso correto da ortografia e das regras de acentuação gráfica continua sendo muito cobrado, principalmente devido à reforma ortográfica. Por exemplo, conhecer as regras de hífen, uso de acentos diferenciais e mudanças no uso de tremas são essenciais.
-
-3. Concordância Verbal e Nominal: Sobretudo, a concordância verbal e nominal é uma das partes mais técnicas, mas também uma das mais frequentes. Além disso, as bancas gostam de testar como você lida com a relação entre o sujeito e o verbo, além da adequação de adjetivos e substantivos.
-
-4. Crase: Por fim, o uso da crase é um dos temas que mais confunde os candidatos. Nesse sentido, as bancas pedem que você saiba quando o uso do acento grave é obrigatório, facultativo ou proibido.
-
-5. Pontuação: Além disso, a pontuação é crucial para garantir que a construção do texto seja coerente e compreensível. Por exemplo, questões sobre o uso correto de vírgulas, pontos e travessões estão presentes em quase todas as provas.
-
-6. Regência Verbal e Nominal: Agora, a regência verbal e nominal é cobrada para testar seu conhecimento sobre a relação entre os verbos, substantivos e os complementos que os acompanham. Portanto, praticar com exercícios que abordam regência é importante para se sair bem.
-
-7. Figuras de Linguagem: A princípio, as figuras de linguagem costumam aparecer em questões de interpretação e análise textual. Além disso, identificar corretamente metáforas, hipérboles, eufemismos e outras figuras pode garantir alguns pontos extras.
-
-8. Formação de Palavras: Agora, entender os processos de formação de palavras, como prefixação, sufixação e composição, é essencial. Além disso, esse tema está diretamente ligado à morfologia, o que torna seu estudo ainda mais importante.
-
-9. Sintaxe e Análise Sintática: Sobretudo, o conhecimento sobre a estrutura das frases, a função dos termos dentro das orações e a classificação das orações subordinadas e coordenadas são recorrentes nas provas.`
+    2. Fonética: Agora, a fonética abrange o estudo do fonema e da letra, encontros vocálicos (ditongo, tritongo e hiato), encontros consonantais e dígrafos. Além disso, a tonicidade (monossílaba, dissílaba, trissílaba, oxítona, paroxítona e proparoxítona) e a separação de sílabas são temas recorrentes.
+    
+    3. Morfologia: Sobretudo, a morfologia estuda os radicais, os processos de prefixação, sufixação, parassíntese, composição, derivação e hibridismo. Ou seja, é fundamental para compreender a estrutura e a formação das palavras.
+    
+    4. Sintaxe: A princípio, a sintaxe trata do sujeito e do predicado e suas respectivas classificações, da transitividade dos verbos e da complementação. Além disso, abrange frase, oração, período e suas classificações, além da concordância e da regência em todas as suas formas.
+    
+    5. Classes Gramaticais: Agora, as classes gramaticais incluem substantivos, artigos, adjetivos, numerais, pronomes, advérbios, preposições, conjunções, verbos e suas flexões. Portanto, conhecer cada uma delas é indispensável para a análise morfossintática.
+    
+    6. Acentuação Gráfica: Além disso, a acentuação gráfica segue regras específicas que devem ser dominadas, principalmente com base no novo acordo ortográfico da Língua Portuguesa.
+    
+    7. Uso do Sinal de Crase: Por fim, o uso da crase é um dos temas que mais geram dúvidas. Nesse sentido, as bancas exigem conhecimento sobre quando seu uso é obrigatório, facultativo ou proibido.
+    
+    8. Pontuação e Regras de Uso: Sobretudo, a pontuação é crucial para a coerência textual. Portanto, o uso correto de vírgulas, pontos, dois-pontos e travessões deve ser praticado com frequência.
+    
+    9. Ortografia Oficial e Norma Culta: Agora, a ortografia oficial e a norma culta são a base para todas as questões de Língua Portuguesa. Além disso, a redação de correspondências oficiais também é cobrada, exigindo domínio da linguagem formal e do novo acordo ortográfico.`
   },
   {
     nome: '🔢 Matemática',
     conteudo: `Matemática para concursos públicos:
 
-1. Aritmética Básica: Operações fundamentais (adição, subtração, multiplicação, divisão), Regra de três simples e composta, Porcentagem e proporção.
+    1. Números Naturais: A princípio, o conjunto dos números naturais é a base da matemática. Além disso, envolve representação geométrica, comparação e os sistemas atuais de numeração. As operações fundamentais (adição, subtração, multiplicação e divisão) são essenciais, assim como suas propriedades. Sobretudo, potenciação, radiciação e divisibilidade são temas recorrentes. Portanto, a resolução de problemas práticos é fundamental para fixar o conteúdo.
 
-2. Álgebra: Expressões algébricas, Equações e inequações do 1º e 2º grau, Sistemas de equações.
-
-3. Geometria: Geometria plana (áreas e perímetros de figuras planas), Geometria espacial (volumes e áreas de sólidos geométricos), Noções de geometria analítica.
-
-4. Análise Combinatória e Probabilidade: Contagem de elementos, Fatorial, Permutações, combinações e arranjos simples, Probabilidade básica.
-
-5. Matemática Financeira: Juros simples e compostos, Porcentagem aplicada a situações financeiras.
-
-6. Estatística: Noções básicas de estatística, Interpretação de gráficos e tabelas.
-
-7. Raciocínio Lógico: Proposições lógicas, Tabelas verdade, Raciocínio lógico-matemático.
-
-8. Resolução de Problemas: Aplicação prática dos conceitos matemáticos em situações do cotidiano.`
+    2. Números Racionais: Agora, os números racionais incluem frações e decimais, com suas respectivas operações. Além disso, a porcentagem é amplamente cobrada, principalmente em situações do cotidiano e em gráficos. Nesse sentido, a interpretação de gráficos e o sistema monetário também fazem parte desse bloco. Por fim, a resolução de problemas envolvendo equações de 1º e 2º graus completa este tópico.
+    
+    3. Aritmética Básica: Sobretudo, a aritmética básica compreende as operações fundamentais (adição, subtração, multiplicação e divisão). Além disso, a regra de três simples e composta é muito utilizada para resolver problemas de proporcionalidade. A porcentagem e a proporção também estão presentes nesse bloco, sendo aplicadas em diversas situações.
+    
+    4. Álgebra: A princípio, a álgebra trabalha com expressões algébricas, equações e inequações do 1º e 2º grau. Além disso, os sistemas de equações são frequentemente cobrados em provas de concursos. Portanto, dominar esses tópicos é indispensável para resolver problemas matemáticos com eficiência.
+    
+    5. Geometria: Agora, a geometria é dividida em três partes principais. Primeiramente, a geometria plana aborda áreas e perímetros de figuras planas. Em segundo lugar, a geometria espacial trata de volumes e áreas de sólidos geométricos. Por fim, noções de geometria analítica também são exigidas em alguns concursos.
+    
+    6. Análise Combinatória e Probabilidade: Sobretudo, a análise combinatória envolve contagem de elementos, fatorial, permutações, combinações e arranjos simples. Além disso, a probabilidade básica é cobrada para calcular chances de ocorrência de eventos. Nesse sentido, esses temas são muito comuns em questões de raciocínio lógico.
+    
+    7. Matemática Financeira: A princípio, a matemática financeira trabalha com juros simples e compostos, além da porcentagem aplicada a situações financeiras. Portanto, entender esses conceitos é essencial para resolver problemas envolvendo empréstimos, financiamentos e investimentos.
+    
+    8. Estatística: Agora, a estatística traz noções básicas sobre coleta e organização de dados. Além disso, a interpretação de gráficos e tabelas é amplamente cobrada em provas, exigindo do candidato a capacidade de extrair informações corretamente.
+    
+    9. Raciocínio Lógico: Sobretudo, o raciocínio lógico envolve proposições lógicas, tabelas verdade e raciocínio lógico-matemático. Além disso, esse bloco testa a capacidade do candidato de resolver problemas de forma estruturada e coerente, sendo cada vez mais valorizado em concursos.
+    
+    10. Resolução de Problemas: Por fim, a resolução de problemas é a aplicação prática de todos os conceitos matemáticos em situações do cotidiano. Portanto, praticar com questões de provas anteriores e exercícios variados é a melhor forma de consolidar o aprendizado e garantir um bom desempenho.`
   },
   {
     nome: '📖 Pedagogia',
@@ -88,19 +92,49 @@ const CATEGORIAS = [
     nome: '🏛️ História',
     conteudo: `História para concursos públicos:
 
-1. A Pré-História: Conceito e períodos da Pré-História.
+    1. Avaliação da Aprendizagem: A princípio, a avaliação da aprendizagem é um processo contínuo que visa verificar o desenvolvimento do aluno. Além disso, envolve diferentes instrumentos e critérios, considerando aspectos qualitativos e quantitativos. Portanto, o professor deve utilizar a avaliação como ferramenta de diagnóstico e reflexão sobre sua prática pedagógica.
 
-2. A Idade Média: Feudalismo: estrutura social e econômica.
-
-3. Revoluções do Século XIX: A Revolução Industrial e suas consequências.
-
-4. Era Pós-Guerra e Descolonização: Reconstrução pós-Segunda Guerra Mundial.
-
-5. Brasil Império: Primeiro Reinado, Período Regencial, Segundo Reinado, Abolição da Escravatura e Proclamação da República.
-
-6. Brasil República: República Velha, Era Vargas, República Populista, Ditadura Militar.
-
-7. Brasil entre 1961 e 1989: Governos de Jânio Quadros, João Goulart, regime militar (1964-1985), abertura política e constituição de 1988.`
+    2. Didática e Trabalho Pedagógico: Agora, a didática é o campo que estuda os métodos e técnicas de ensino. Sobretudo, o trabalho pedagógico envolve a organização do processo de ensino-aprendizagem, considerando a relação professor-aluno, os recursos didáticos e as estratégias de ensino. Nesse sentido, uma prática pedagógica bem planejada favorece a aprendizagem significativa.
+    
+    3. Fundamentos de Currículo: A princípio, o currículo é o conjunto de conhecimentos e práticas que orientam a ação educativa. Além disso, seus fundamentos envolvem aspectos históricos, sociais, políticos e culturais. Portanto, compreender as teorias curriculares é essencial para elaborar propostas pedagógicas alinhadas à realidade dos alunos.
+    
+    4. Perspectivas Metodológicas: Sobretudo, as perspectivas metodológicas orientam a escolha das abordagens de ensino. Além disso, incluem tendências como o construtivismo, o sociointeracionismo e o ensino baseado em projetos. Por fim, o professor deve conhecer diferentes metodologias para adequar sua prática às necessidades dos estudantes.
+    
+    5. Planejamento e Gestão Educacional: Agora, o planejamento educacional envolve a organização de objetivos, conteúdos e estratégias. Além disso, a gestão educacional abrange a administração de recursos, a coordenação pedagógica e a articulação com a comunidade escolar. Portanto, um bom planejamento e uma gestão participativa são fundamentais para o sucesso da instituição de ensino.
+    
+    6. Psicologia do Desenvolvimento e da Aprendizagem: A princípio, a psicologia do desenvolvimento estuda as transformações físicas, cognitivas e emocionais ao longo da vida. Além disso, a psicologia da aprendizagem investiga como os indivíduos adquirem conhecimentos e habilidades. Nesse sentido, conhecer as teorias de Piaget, Vygotsky e outros autores é indispensável para o educador.
+    
+    7. Metodologia de Ensino de História: Sobretudo, a metodologia de ensino de História busca promover a compreensão crítica dos processos históricos. Além disso, envolve a utilização de fontes, documentos, imagens e narrativas para construir o conhecimento histórico. Portanto, o professor deve estimular o pensamento histórico e a reflexão sobre o presente.
+    
+    8. Pré-História e Sociedades Antigas: A princípio, a Pré-História abrange o período desde o surgimento dos primeiros hominídeos até o desenvolvimento da escrita. Além disso, as sociedades da antiguidade incluem civilizações como Egito, Mesopotâmia, Grécia e Roma. Nesse sentido, compreender essas culturas é essencial para entender a formação do mundo ocidental.
+    
+    9. Sociedade Medieval e Transformações Econômicas: Agora, a sociedade medieval foi marcada pelo feudalismo e pela influência da Igreja. Além disso, as transformações econômicas, políticas e sociais ocorridas com o desenvolvimento do comércio e da vida urbana deram origem ao Renascimento e às grandes navegações. Portanto, esse período é fundamental para entender a transição para a Idade Moderna.
+    
+    10. Expansão Marítima e Colonização da América: Sobretudo, a expansão marítima europeia, liderada por portugueses e espanhóis, resultou no processo de colonização da América. Além disso, a Reforma Protestante e o Renascimento Cultural foram movimentos que transformaram a mentalidade europeia. Nesse sentido, esses eventos tiveram impactos profundos na história mundial.
+    
+    11. Iluminismo e Revolução Industrial: A princípio, o Iluminismo foi um movimento intelectual que defendia a razão, a liberdade e a igualdade. Além disso, a Revolução Industrial trouxe profundas mudanças econômicas, sociais e tecnológicas. Portanto, esses dois fenômenos foram determinantes para a formação do mundo contemporâneo.
+    
+    12. Conflitos Mundiais do Século XX: Agora, os conflitos mundiais do século XX, como as duas Grandes Guerras, marcaram a história global. Além disso, a Guerra Fria e a corrida armamentista dividiram o mundo em blocos ideológicos. Nesse sentido, compreender esses eventos é essencial para analisar as relações internacionais atuais.
+    
+    13. História da África e Luta dos Negros no Brasil: Sobretudo, a história da África é rica e diversa, com civilizações e impérios importantes. Além disso, a luta dos negros no Brasil envolve resistência à escravidão e a busca por direitos e igualdade. Portanto, conhecer essa trajetória é fundamental para entender a formação da sociedade brasileira.
+    
+    14. Brasil Colônia e Processo de Independência: A princípio, a economia e a sociedade do Brasil Colônia foram marcadas pela exploração e pela escravidão. Além disso, o processo de independência do Brasil, em 1822, foi influenciado por fatores internos e externos. Nesse sentido, esse período é crucial para a compreensão da história nacional.
+    
+    15. Primeiro e Segundo Império no Brasil: Agora, o Primeiro Império foi marcado por lutas internas e pela consolidação da unidade territorial. Além disso, o Segundo Império enfrentou questões internas e lutas externas, como a Guerra do Paraguai. Portanto, estudar esse período é essencial para entender a formação do Estado brasileiro.
+    
+    16. República Velha, República Nova e Governos Militares: Sobretudo, a República Velha foi caracterizada pelo coronelismo e pela política do café com leite. Além disso, a República Nova trouxe transformações políticas e sociais. Por fim, os governos militares e o processo de redemocratização marcaram a história recente do Brasil.
+    
+    17. História de Santa Catarina: A princípio, a história de Santa Catarina envolve a colonização açoriana, a imigração europeia e o desenvolvimento econômico do estado. Além disso, sua geografia e cultura são aspectos importantes para compreender a identidade catarinense. Portanto, esse tema é específico para concursos estaduais e municipais.
+    
+    18. Mundo Contemporâneo: Globalização, Conflitos e Meio Ambiente: Agora, o mundo contemporâneo é marcado pela globalização, que integra economias e culturas. Além disso, os conflitos no Oriente Médio, o terrorismo e os problemas do meio ambiente são desafios atuais. Nesse sentido, compreender essas questões é essencial para uma visão crítica da realidade.
+    
+    19. Lei de Diretrizes e Bases (LDB): Sobretudo, a Lei de Diretrizes e Bases da Educação Nacional (LDB 9.394/96) é o principal marco legal da educação brasileira. Além disso, estabelece princípios, fins e diretrizes para a organização da educação. Portanto, todo educador deve conhecer a LDB para atuar de acordo com a legislação.
+    
+    20. Estatuto da Criança e do Adolescente (ECA): A princípio, o Estatuto da Criança e do Adolescente (Lei 8.069/90) garante os direitos fundamentais de crianças e adolescentes. Além disso, estabelece deveres para a família, a sociedade e o Estado. Nesse sentido, o ECA é essencial para a atuação de profissionais da educação.
+    
+    21. Legislação Municipal: Estatuto do Servidor Público e Plano de Carreira: Agora, a legislação municipal inclui o Estatuto do Servidor Público, que regula direitos e deveres dos servidores. Além disso, o plano de carreira dos servidores públicos da educação define a progressão funcional e os critérios de ascensão. Portanto, conhecer essas normas é indispensável para concursos municipais.
+    
+    22. Atribuições do Cargo e Lei Complementar 180/2013: Por fim, as atribuições do cargo estão previstas na Lei Complementar 180/2013, que regulamenta a carreira dos profissionais da educação. Além disso, essa lei define competências, jornada de trabalho e direitos específicos da categoria. Portanto, o candidato deve estar atento a essas disposições legais para uma atuação conforme a legislação vigente.`
   },
   {
     nome: '✍️ Escrever meu próprio conteúdo',
@@ -843,7 +877,7 @@ export default function Home() {
             RODAPÉ
             ============================================================ */}
         <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Gerado com ❤️ usando DeepSeek AI</p>
+          <p>Criado com ❤️por KASEMIRO</p>
         </div>
       </div>
     </main>
