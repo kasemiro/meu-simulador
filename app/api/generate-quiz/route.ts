@@ -1,6 +1,107 @@
 // app/api/generate-quiz/route.ts
 import { NextResponse } from 'next/server';
 
+// ============================================================
+// FUNÇÃO: GERAR PROMPT POR BANCA
+// ============================================================
+
+function getPromptPorBanca(banca: string, quantidade: number): string {
+  const basePrompt = `
+Você é um professor especialista em concursos públicos e um especialista na banca.
+
+CRIE EXATAMENTE ${quantidade} QUESTÕES de múltipla escolha sobre o conteúdo abaixo.
+
+INSTRUÇÕES GERAIS:
+1. Cada questão deve ter 4 alternativas: A, B, C, D
+2. Apenas UMA alternativa deve ser correta
+3. Dê uma explicação detalhada do porquê a resposta está certa
+4. Use linguagem formal de concurso
+5. RESPONDA APENAS COM JSON. NADA MAIS.
+
+FORMATO EXATO:
+{"questoes":[
+  {
+    "pergunta": "Texto da pergunta?",
+    "opcoes": {
+      "A": "Primeira opção",
+      "B": "Segunda opção",
+      "C": "Terceira opção",
+      "D": "Quarta opção"
+    },
+    "correta": "A",
+    "explicacao": "Explicação detalhada..."
+  }
+]}
+`;
+
+  const promptsPorBanca: Record<string, string> = {
+    '🎯 FGV': `
+${basePrompt}
+
+ESTILO FGV (Fundação Getúlio Vargas):
+- Use textos de apoio longos (filósofos ou doutrinadores) como contexto
+- Crie alternativas com sinônimos perfeitos onde apenas um se encaixa no contexto
+- Faça pegadinhas com palavras como "desde que" ou "contanto que"
+- Cobrar conceitos de "Teoria Geral" e princípios implícitos
+- Alto grau de interpretação
+- Alternativa 'E' raramente deve ser a correta
+- Enunciados com comando indireto: "De acordo com...", "Considerando..."
+`,
+
+    '📋 CEBRASPE': `
+${basePrompt}
+
+ESTILO CEBRASPE (Centro Brasileiro de Pesquisa em Avaliação):
+- Formato "julgue o item" (Certo ou Errado)
+- Frases curtas, mas altamente técnicas
+- Pegadinha: informação 100% correta, mas deturpar o final
+- Cobrar entendimentos do STF em Repercussão Geral
+- Alternativas curtas e diretas
+- Comando direto: "Julgue o item a seguir..."
+`,
+
+    '📝 VUNESP': `
+${basePrompt}
+
+ESTILO VUNESP:
+- Questões diretas com comando claro: "Assinale a alternativa correta"
+- Cobrar literalidade da lei e jurisprudência sumulada
+- Repetir o nome da lei no enunciado
+- Alternativas com 5 linhas cada
+- Diferença entre certa e errada é uma única palavra
+- Comando claro: "Assinale a alternativa que..."
+`,
+
+    '⚖️ FCC': `
+${basePrompt}
+
+ESTILO FCC (Fundação Carlos Chagas):
+- Cobrar súmulas do STJ e STF de forma LITERAL
+- Misturar duas leis no mesmo enunciado
+- Enunciados extensos com situação-problema (caso concreto)
+- Exigir solução com base na lei seca
+- Comando indireto: "Considerando a situação hipotética..."
+`,
+
+    '📚 Genérica': `
+${basePrompt}
+
+ESTILO GENÉRICO:
+- Questões padrão de múltipla escolha
+- Comando claro e direto
+- Nível médio de dificuldade
+- Distribuição equilibrada entre os tópicos
+- Comando: "Assinale a alternativa correta"
+`
+  };
+
+  return promptsPorBanca[banca] || promptsPorBanca['📚 Genérica'];
+}
+
+// ============================================================
+// FUNÇÃO PRINCIPAL (POST)
+// ============================================================
+
 export async function POST(request: Request) {
   try {
     console.log('📥 ===== INÍCIO =====');
@@ -8,11 +109,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const conteudo = body?.conteudo as string;
     const quantidade = body?.quantidade || 40;
-    const categoria = body?.categoria || 'Todas';
+    const banca = body?.banca || '📚 Genérica';
     
     console.log('📝 Conteúdo:', conteudo?.length || 0, 'caracteres');
     console.log('📊 Quantidade:', quantidade);
-    console.log('📂 Categoria:', categoria);
+    console.log('🎯 Banca:', banca);
     
     if (!conteudo || conteudo.length < 50) {
       return NextResponse.json({ 
@@ -28,46 +129,10 @@ export async function POST(request: Request) {
       }, { status: 500 });
     }
 
-    // ===== PROMPT COM CATEGORIA =====
-    const PROMPT_QUESTIONS = `
-Você é um professor especialista em concursos públicos.
-
-CRIE EXATAMENTE ${quantidade} QUESTÕES de múltipla escolha sobre o conteúdo abaixo.
-
-${categoria !== 'Todas' ? `FOQUE APENAS NA CATEGORIA: ${categoria}` : 'MISTURE DIFERENTES TÓPICOS do conteúdo.'}
-
-INSTRUÇÕES DETALHADAS:
-1. Cada questão deve ter 4 alternativas: A, B, C, D
-2. Apenas UMA alternativa deve ser correta
-3. As alternativas incorretas devem ser plausíveis (não absurdas)
-4. Dê uma explicação detalhada do porquê a resposta está certa
-5. As questões devem ser desafiadoras (nível médio/difícil)
-6. Use linguagem formal de concurso
-7. Distribua as questões por diferentes tópicos do conteúdo
-8. Evite questões muito óbvias ou repetitivas
-
-RESPONDA APENAS COM JSON. NADA MAIS.
-
-FORMATO EXATO:
-{"questoes":[
-  {
-    "pergunta": "Texto da pergunta?",
-    "opcoes": {
-      "A": "Primeira opção",
-      "B": "Segunda opção",
-      "C": "Terceira opção",
-      "D": "Quarta opção"
-    },
-    "correta": "A",
-    "explicacao": "Explicação detalhada sobre a resposta correta..."
-  }
-]}
-
-CONTEÚDO PARA CRIAR AS QUESTÕES:
-`;
-
+    // ===== PROMPT ESPECÍFICO DA BANCA =====
+    const promptBase = getPromptPorBanca(banca, quantidade);
     const textoLimitado = conteudo.slice(0, 8000);
-    const prompt = PROMPT_QUESTIONS + "\n\n" + textoLimitado;
+    const promptCompleto = promptBase + `\n\nCONTEÚDO:\n${textoLimitado}`;
 
     console.log('📤 Enviando para DeepSeek...');
 
@@ -86,7 +151,7 @@ CONTEÚDO PARA CRIAR AS QUESTÕES:
           },
           {
             role: 'user',
-            content: prompt
+            content: promptCompleto
           }
         ],
         temperature: 0.8,
@@ -209,7 +274,10 @@ CONTEÚDO PARA CRIAR AS QUESTÕES:
   }
 }
 
-// ===== FUNÇÃO DE FALLBACK =====
+// ============================================================
+// FUNÇÃO DE FALLBACK
+// ============================================================
+
 function gerarQuestoesFallback(conteudo: string, quantidade: number): any[] {
   const questoes = [];
   const topicos = conteudo.split(/[.;,]/).filter(t => t.trim().length > 30);
