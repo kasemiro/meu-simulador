@@ -3,9 +3,10 @@ import { useState, useEffect } from 'react';
 interface HeaderProps {
   darkMode: boolean;
   onToggleDarkMode: (value: boolean) => void;
+  onComecode?: () => void;
 }
 
-export default function Header({ darkMode, onToggleDarkMode }: HeaderProps) {
+export default function Header({ darkMode, onToggleDarkMode, onComecode }: HeaderProps) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -15,45 +16,39 @@ export default function Header({ darkMode, onToggleDarkMode }: HeaderProps) {
   if (!mounted) return null;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 shadow-sm">
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white shadow-sm">
       <div className="container-custom">
-        <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-4">
+        <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo e Título */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-primary flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0">
-              📚
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
+              🎓
             </div>
-            <div className="min-w-0">
-              <h1 className="font-bold text-base sm:text-lg text-gray-900 dark:text-white truncate">
-                Simulador
+            <div>
+              <h1 className="font-bold text-base text-gray-900">
+                Simulador de Concurso
               </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Questões com IA</p>
+              <p className="text-xs text-gray-500">Questões com IA</p>
             </div>
           </div>
 
-          {/* Navegação e Controles */}
-          <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-            {/* Toggle Dark Mode */}
+          {/* Navegação e Botão */}
+          <div className="flex items-center gap-6">
+            <nav className="hidden sm:flex items-center gap-6">
+              <button className="text-gray-700 hover:text-gray-900 font-medium text-sm">
+                Gerar Simulado
+              </button>
+              <button className="text-gray-700 hover:text-gray-900 font-medium text-sm">
+                Matérias
+              </button>
+            </nav>
+            
             <button
-              onClick={() => onToggleDarkMode(!darkMode)}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors flex-shrink-0"
-              aria-label="Alternar modo escuro"
-              title={darkMode ? 'Modo claro' : 'Modo escuro'}
+              onClick={onComecode}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
             >
-              {darkMode ? '☀️' : '🌙'}
+              Começar
             </button>
-
-            {/* GitHub Link - Hidden on mobile, shown on sm+ */}
-            <a
-              href="https://github.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:block p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0"
-              aria-label="GitHub"
-              title="GitHub"
-            >
-              ⭐
-            </a>
           </div>
         </div>
       </div>
