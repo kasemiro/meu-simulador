@@ -1,17 +1,13 @@
-// ============================================================
-// ARQUIVO: app/page.tsx
-// DESCRIÇÃO: Página principal do Simulador de Concurso com IA
-// ============================================================
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import jsPDF from 'jspdf';
-
-// ============================================================
-// TIPOS (TypeScript)
-// ============================================================
+import Header from './components/Header';
+import Footer from './components/Footer';
+import AdSpace from './components/AdSpace';
+import CategoryCard from './components/CategoryCard';
+import ProgressBar from './components/ProgressBar';
+import Breadcrumb from './components/Breadcrumb';
 
 type Questao = {
   pergunta: string;
@@ -24,10 +20,6 @@ type Questao = {
   correta: string;
   explicacao: string;
 };
-
-// ============================================================
-// CATEGORIAS COM CONTEÚDO PRÉ-DEFINIDO
-// ============================================================
 
 const CATEGORIAS = [
   {
@@ -96,45 +88,7 @@ const CATEGORIAS = [
 
     2. Didática e Trabalho Pedagógico: Agora, a didática é o campo que estuda os métodos e técnicas de ensino. Sobretudo, o trabalho pedagógico envolve a organização do processo de ensino-aprendizagem, considerando a relação professor-aluno, os recursos didáticos e as estratégias de ensino. Nesse sentido, uma prática pedagógica bem planejada favorece a aprendizagem significativa.
     
-    3. Fundamentos de Currículo: A princípio, o currículo é o conjunto de conhecimentos e práticas que orientam a ação educativa. Além disso, seus fundamentos envolvem aspectos históricos, sociais, políticos e culturais. Portanto, compreender as teorias curriculares é essencial para elaborar propostas pedagógicas alinhadas à realidade dos alunos.
-    
-    4. Perspectivas Metodológicas: Sobretudo, as perspectivas metodológicas orientam a escolha das abordagens de ensino. Além disso, incluem tendências como o construtivismo, o sociointeracionismo e o ensino baseado em projetos. Por fim, o professor deve conhecer diferentes metodologias para adequar sua prática às necessidades dos estudantes.
-    
-    5. Planejamento e Gestão Educacional: Agora, o planejamento educacional envolve a organização de objetivos, conteúdos e estratégias. Além disso, a gestão educacional abrange a administração de recursos, a coordenação pedagógica e a articulação com a comunidade escolar. Portanto, um bom planejamento e uma gestão participativa são fundamentais para o sucesso da instituição de ensino.
-    
-    6. Psicologia do Desenvolvimento e da Aprendizagem: A princípio, a psicologia do desenvolvimento estuda as transformações físicas, cognitivas e emocionais ao longo da vida. Além disso, a psicologia da aprendizagem investiga como os indivíduos adquirem conhecimentos e habilidades. Nesse sentido, conhecer as teorias de Piaget, Vygotsky e outros autores é indispensável para o educador.
-    
-    7. Metodologia de Ensino de História: Sobretudo, a metodologia de ensino de História busca promover a compreensão crítica dos processos históricos. Além disso, envolve a utilização de fontes, documentos, imagens e narrativas para construir o conhecimento histórico. Portanto, o professor deve estimular o pensamento histórico e a reflexão sobre o presente.
-    
-    8. Pré-História e Sociedades Antigas: A princípio, a Pré-História abrange o período desde o surgimento dos primeiros hominídeos até o desenvolvimento da escrita. Além disso, as sociedades da antiguidade incluem civilizações como Egito, Mesopotâmia, Grécia e Roma. Nesse sentido, compreender essas culturas é essencial para entender a formação do mundo ocidental.
-    
-    9. Sociedade Medieval e Transformações Econômicas: Agora, a sociedade medieval foi marcada pelo feudalismo e pela influência da Igreja. Além disso, as transformações econômicas, políticas e sociais ocorridas com o desenvolvimento do comércio e da vida urbana deram origem ao Renascimento e às grandes navegações. Portanto, esse período é fundamental para entender a transição para a Idade Moderna.
-    
-    10. Expansão Marítima e Colonização da América: Sobretudo, a expansão marítima europeia, liderada por portugueses e espanhóis, resultou no processo de colonização da América. Além disso, a Reforma Protestante e o Renascimento Cultural foram movimentos que transformaram a mentalidade europeia. Nesse sentido, esses eventos tiveram impactos profundos na história mundial.
-    
-    11. Iluminismo e Revolução Industrial: A princípio, o Iluminismo foi um movimento intelectual que defendia a razão, a liberdade e a igualdade. Além disso, a Revolução Industrial trouxe profundas mudanças econômicas, sociais e tecnológicas. Portanto, esses dois fenômenos foram determinantes para a formação do mundo contemporâneo.
-    
-    12. Conflitos Mundiais do Século XX: Agora, os conflitos mundiais do século XX, como as duas Grandes Guerras, marcaram a história global. Além disso, a Guerra Fria e a corrida armamentista dividiram o mundo em blocos ideológicos. Nesse sentido, compreender esses eventos é essencial para analisar as relações internacionais atuais.
-    
-    13. História da África e Luta dos Negros no Brasil: Sobretudo, a história da África é rica e diversa, com civilizações e impérios importantes. Além disso, a luta dos negros no Brasil envolve resistência à escravidão e a busca por direitos e igualdade. Portanto, conhecer essa trajetória é fundamental para entender a formação da sociedade brasileira.
-    
-    14. Brasil Colônia e Processo de Independência: A princípio, a economia e a sociedade do Brasil Colônia foram marcadas pela exploração e pela escravidão. Além disso, o processo de independência do Brasil, em 1822, foi influenciado por fatores internos e externos. Nesse sentido, esse período é crucial para a compreensão da história nacional.
-    
-    15. Primeiro e Segundo Império no Brasil: Agora, o Primeiro Império foi marcado por lutas internas e pela consolidação da unidade territorial. Além disso, o Segundo Império enfrentou questões internas e lutas externas, como a Guerra do Paraguai. Portanto, estudar esse período é essencial para entender a formação do Estado brasileiro.
-    
-    16. República Velha, República Nova e Governos Militares: Sobretudo, a República Velha foi caracterizada pelo coronelismo e pela política do café com leite. Além disso, a República Nova trouxe transformações políticas e sociais. Por fim, os governos militares e o processo de redemocratização marcaram a história recente do Brasil.
-    
-    17. História de Santa Catarina: A princípio, a história de Santa Catarina envolve a colonização açoriana, a imigração europeia e o desenvolvimento econômico do estado. Além disso, sua geografia e cultura são aspectos importantes para compreender a identidade catarinense. Portanto, esse tema é específico para concursos estaduais e municipais.
-    
-    18. Mundo Contemporâneo: Globalização, Conflitos e Meio Ambiente: Agora, o mundo contemporâneo é marcado pela globalização, que integra economias e culturas. Além disso, os conflitos no Oriente Médio, o terrorismo e os problemas do meio ambiente são desafios atuais. Nesse sentido, compreender essas questões é essencial para uma visão crítica da realidade.
-    
-    19. Lei de Diretrizes e Bases (LDB): Sobretudo, a Lei de Diretrizes e Bases da Educação Nacional (LDB 9.394/96) é o principal marco legal da educação brasileira. Além disso, estabelece princípios, fins e diretrizes para a organização da educação. Portanto, todo educador deve conhecer a LDB para atuar de acordo com a legislação.
-    
-    20. Estatuto da Criança e do Adolescente (ECA): A princípio, o Estatuto da Criança e do Adolescente (Lei 8.069/90) garante os direitos fundamentais de crianças e adolescentes. Além disso, estabelece deveres para a família, a sociedade e o Estado. Nesse sentido, o ECA é essencial para a atuação de profissionais da educação.
-    
-    21. Legislação Municipal: Estatuto do Servidor Público e Plano de Carreira: Agora, a legislação municipal inclui o Estatuto do Servidor Público, que regula direitos e deveres dos servidores. Além disso, o plano de carreira dos servidores públicos da educação define a progressão funcional e os critérios de ascensão. Portanto, conhecer essas normas é indispensável para concursos municipais.
-    
-    22. Atribuições do Cargo e Lei Complementar 180/2013: Por fim, as atribuições do cargo estão previstas na Lei Complementar 180/2013, que regulamenta a carreira dos profissionais da educação. Além disso, essa lei define competências, jornada de trabalho e direitos específicos da categoria. Portanto, o candidato deve estar atento a essas disposições legais para uma atuação conforme a legislação vigente.`
+    3. Fundamentos de Currículo: A princípio, o currículo é o conjunto de conhecimentos e práticas que orientam a ação educativa. Além disso, seus fundamentos envolvem aspectos históricos, sociais, políticos e culturais. Portanto, compreender as teorias curriculares é essencial para elaborar propostas pedagógicas alinhadas à realidade dos alunos.`
   },
   {
     nome: '✍️ Escrever meu próprio conteúdo',
@@ -143,10 +97,6 @@ const CATEGORIAS = [
 ];
 
 export default function Home() {
-  // ============================================================
-  // ESTADOS (STATES)
-  // ============================================================
-
   const [conteudo, setConteudo] = useState('');
   const [quantidade, setQuantidade] = useState(40);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
@@ -158,10 +108,6 @@ export default function Home() {
   const [erro, setErro] = useState('');
   const [aviso, setAviso] = useState('');
   const [darkMode, setDarkMode] = useState(false);
-
-  // ============================================================
-  // EFEITOS (useEffect) - DARK MODE
-  // ============================================================
 
   useEffect(() => {
     const saved = localStorage.getItem('darkMode');
@@ -178,10 +124,6 @@ export default function Home() {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
-
-  // ============================================================
-  // FUNÇÃO: GERAR SIMULADO
-  // ============================================================
 
   const handleGerarSimulado = async () => {
     let textoParaEnviar = '';
@@ -238,17 +180,9 @@ export default function Home() {
     }
   };
 
-  // ============================================================
-  // FUNÇÃO: RESPONDER QUESTÃO
-  // ============================================================
-
   const responderQuestao = (indice: number, opcao: string) => {
     setRespostas(prev => ({ ...prev, [indice]: opcao }));
   };
-
-  // ============================================================
-  // FUNÇÃO: CALCULAR RESULTADO
-  // ============================================================
 
   const calcularResultado = () => {
     let acertos = 0;
@@ -258,26 +192,18 @@ export default function Home() {
     return acertos;
   };
 
-  // ============================================================
-  // FUNÇÃO: FINALIZAR PROVA
-  // ============================================================
-
   const finalizarProva = () => {
     const totalQuestoes = questoes.length;
     const respondidas = Object.keys(respostas).length;
     
     if (respondidas < totalQuestoes) {
-      setErro(`⚠️ Você respondeu apenas ${respondidas} de ${totalQuestoes} questões! Responda todas para ver o resultado.`);
+      setErro(`Você respondeu apenas ${respondidas} de ${totalQuestoes} questões! Responda todas para ver o resultado.`);
       return;
     }
     
     setMostrarResultado(true);
     setErro('');
   };
-
-  // ============================================================
-  // FUNÇÃO: REINICIAR
-  // ============================================================
 
   const reiniciar = () => {
     setQuestoes([]);
@@ -286,22 +212,15 @@ export default function Home() {
     setConteudo('');
     setErro('');
     setAviso('');
+    setCategoriaSelecionada('');
   };
 
-  // ============================================================
-  // FUNÇÃO: EXPORTAR PDF - SEM PREFIXOS, APENAS CORES
-  // ============================================================
-
   const exportarPDF = () => {
-    console.log('🟢 Botão Exportar PDF clicado');
-    
     try {
       if (!questoes || questoes.length === 0) {
         setErro('Nenhuma questão para exportar.');
         return;
       }
-      
-      console.log('🟢 Questões:', questoes.length);
       
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
@@ -310,7 +229,6 @@ export default function Home() {
       const contentWidth = pageWidth - (margin * 2);
       let y = margin;
       
-      // ===== CABEÇALHO =====
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
       pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
@@ -325,7 +243,6 @@ export default function Home() {
       pdf.line(margin, y, pageWidth - margin, y);
       y += 10;
       
-      // ===== RESULTADO =====
       const acertos = calcularResultado();
       const total = questoes.length;
       const percentual = total > 0 ? Math.round((acertos / total) * 100) : 0;
@@ -353,15 +270,11 @@ export default function Home() {
       pdf.line(margin, y, pageWidth - margin, y);
       y += 10;
       
-      // ===== GABARITO =====
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
       pdf.text('GABARITO COMENTADO', pageWidth / 2, y, { align: 'center' });
       y += 10;
       
-      // ============================================================
-      // PERCORRE TODAS AS QUESTÕES
-      // ============================================================
       for (let i = 0; i < questoes.length; i++) {
         const q = questoes[i];
         const respostaUsuario = respostas[i] || 'Não respondeu';
@@ -372,14 +285,12 @@ export default function Home() {
           y = margin;
         }
         
-        // ===== NÚMERO DA QUESTÃO =====
         pdf.setFontSize(11);
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(0, 0, 0);
         pdf.text(`Questão ${i + 1}`, margin, y);
         y += 6;
         
-        // ===== ENUNCIADO =====
         let perguntaLimpa = q.pergunta
           .replace(/[📚🔢📖🏛️✍️⚠️✅❌💡🏆🎉💪]/g, '')
           .replace(/\s+/g, ' ')
@@ -392,9 +303,6 @@ export default function Home() {
         pdf.text(perguntaLines, margin, y);
         y += perguntaLines.length * 5 + 4;
         
-        // ============================================================
-        // ALTERNATIVAS - APENAS CORES, SEM PREFIXOS
-        // ============================================================
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
         
@@ -404,16 +312,14 @@ export default function Home() {
           const isCorreta = letra === q.correta;
           const isMarcada = respostaUsuario === letra;
           
-          // ===== DEFINE A COR (SEM PREFIXOS) =====
           if (isCorreta) {
-            pdf.setTextColor(0, 150, 0);      // Verde para correta
+            pdf.setTextColor(0, 150, 0);
           } else if (isMarcada && !isCorreta) {
-            pdf.setTextColor(200, 0, 0);      // Vermelho para errada marcada
+            pdf.setTextColor(200, 0, 0);
           } else {
-            pdf.setTextColor(0, 0, 0);        // Preto para normal
+            pdf.setTextColor(0, 0, 0);
           }
           
-          // ===== TEXTO SEM PREFIXOS =====
           const lines = pdf.splitTextToSize(texto, contentWidth - 4);
           pdf.text(lines, margin + 4, y);
           y += lines.length * 5 + 1;
@@ -422,14 +328,12 @@ export default function Home() {
         pdf.setTextColor(0, 0, 0);
         y += 2;
         
-        // ===== CORRETA =====
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(0, 150, 0);
         pdf.text(`Correta: ${q.correta}`, margin, y);
         y += 5;
         
-        // ===== EXPLICAÇÃO =====
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(80, 80, 80);
@@ -443,7 +347,6 @@ export default function Home() {
         pdf.text(explicacaoLines, margin + 4, y);
         y += explicacaoLines.length * 4 + 4;
         
-        // ===== SUA RESPOSTA =====
         pdf.setFontSize(9);
         pdf.setFont('helvetica', 'normal');
         const acertouText = acertou ? 'Acertou!' : 'Errou!';
@@ -459,7 +362,6 @@ export default function Home() {
         
         pdf.setTextColor(0, 0, 0);
         
-        // Linha separadora
         if (i < questoes.length - 1) {
           pdf.setDrawColor(220, 220, 220);
           pdf.line(margin, y, pageWidth - margin, y);
@@ -467,7 +369,6 @@ export default function Home() {
         }
       }
       
-      // ===== RODAPÉ =====
       const totalPages = pdf.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
@@ -484,270 +385,207 @@ export default function Home() {
       }
       
       pdf.save('simulado.pdf');
-      console.log('✅ PDF salvo com sucesso!');
-      
     } catch (error) {
-      console.error('🔴 Erro ao gerar PDF:', error);
       setErro(`Erro ao gerar PDF: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     }
   };
 
-  // ============================================================
-  // CLASSES CONDICIONAIS - DARK MODE
-  // ============================================================
-
-  const cardBg = darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white';
-  const cardShadow = darkMode ? 'shadow-xl shadow-gray-900/30' : 'shadow-md';
-  const inputBg = darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300';
-  const hoverBg = darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50';
-
-  // ============================================================
-  // FUNÇÃO: HANDLE CATEGORIA CHANGE
-  // ============================================================
-
-  const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const valor = e.target.value;
-    setCategoriaSelecionada(valor);
-    
-    if (valor === '✍️ Escrever meu próprio conteúdo') {
-      setModoEntrada('texto');
-    } else {
-      setModoEntrada('categoria');
-    }
-  };
-
-  // ============================================================
-  // FUNÇÃO: VERIFICAR TODAS RESPONDIDAS
-  // ============================================================
-
   const todasRespondidas = questoes.length > 0 && Object.keys(respostas).length === questoes.length;
 
-  // ============================================================
-  // RENDERIZAÇÃO (JSX)
-  // ============================================================
-
   return (
-    <main className="min-h-screen transition-colors duration-300">
-      
-      {/* ============================================================
-          HEADER - CABEÇALHO FIXO
-          ============================================================ */}
-      <header className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
-          
-          <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10">
-              <Image
-                src="/logo.png"
-                alt="Logo"
-                width={40}
-                height={40}
-                className="object-contain"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                📚 Simulador de Concurso
-              </h1>
-              <span className="text-xs text-gray-500 dark:text-gray-400">com IA</span>
+    <div className="min-h-screen bg-white dark:bg-slate-900 transition-colors duration-300">
+      <Header darkMode={darkMode} onToggleDarkMode={setDarkMode} />
+
+      {/* Hero Section */}
+      {!questoes.length && !mostrarResultado && (
+        <section className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-800 dark:to-slate-900 py-16">
+          <div className="container-custom text-center">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
+              Simule seu Concurso
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
+              Prepare-se com questões geradas por inteligência artificial. Simulados completos, gabaritos comentados e análise de desempenho.
+            </p>
+            
+            {/* Anúncio topo */}
+            <div className="max-w-4xl mx-auto mb-12">
+              <AdSpace type="top" />
             </div>
           </div>
+        </section>
+      )}
 
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2.5 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-xl"
-            aria-label="Alternar modo escuro"
-          >
-            {darkMode ? '☀️' : '🌙'}
-          </button>
-        </div>
-      </header>
+      <main className="container-custom py-12">
+        {!questoes.length && !mostrarResultado ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Coluna Principal */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Formulário */}
+              <div className="card card-accent">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+                  <span className="text-3xl">📚</span> Escolha sua categoria
+                </h2>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        
-        {/* ============================================================
-            FORMULÁRIO
-            ============================================================ */}
-        <div className={`${cardBg} ${cardShadow} rounded-2xl p-6 mb-8 transition-colors duration-300`}>
-          <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            1. Escolha uma categoria ou digite seu conteúdo
-          </h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                📂 Selecione uma categoria:
-              </label>
-              <select
-                value={categoriaSelecionada}
-                onChange={handleCategoriaChange}
-                className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${inputBg} text-gray-900 dark:text-gray-100`}
-                disabled={carregando}
-              >
-                <option value="">-- Selecione uma categoria --</option>
-                {CATEGORIAS.map((cat) => (
-                  <option key={cat.nome} value={cat.nome}>
-                    {cat.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {modoEntrada === 'texto' && (
-              <div className="animate-fade-in">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  ✍️ Digite seu conteúdo:
-                </label>
-                <textarea
-                  value={conteudo}
-                  onChange={(e) => setConteudo(e.target.value)}
-                  placeholder="Cole aqui o conteúdo do edital, matérias, leis, etc."
-                  className={`w-full h-64 p-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm transition-colors duration-300 ${inputBg} text-gray-900 dark:text-gray-100`}
-                  disabled={carregando}
-                />
-                <div className="flex justify-between mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  <span>{conteudo.length} caracteres</span>
-                  {conteudo.length > 0 && conteudo.length < 50 && (
-                    <span className="text-yellow-600 dark:text-yellow-400">⚠️ Mínimo 50</span>
-                  )}
-                  {conteudo.length >= 50 && (
-                    <span className="text-green-600 dark:text-green-400">✅ OK</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Quantidade de questões:
-              </label>
-              <div className="flex gap-3 flex-wrap">
-                {[20, 40, 60, 80].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => setQuantidade(num)}
-                    className={`px-5 py-2 rounded-xl font-semibold transition-all duration-200 ${
-                      quantidade === num
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-300 dark:ring-blue-500 scale-105'
-                        : `bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300`
-                    }`}
-                    disabled={carregando}
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={handleGerarSimulado}
-              disabled={carregando || 
-                (modoEntrada === 'categoria' && !categoriaSelecionada) ||
-                (modoEntrada === 'texto' && conteudo.length < 50)}
-              className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-6 py-3.5 rounded-xl text-lg font-semibold transition-all duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600"
-            >
-              {carregando ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin">⏳</span> Gerando {quantidade} questões...
-                </span>
-              ) : (
-                `🚀 Gerar Simulado (${quantidade} questões)`
-              )}
-            </button>
-
-            {erro && (
-              <div className="p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl">
-                ⚠️ {erro}
-              </div>
-            )}
-            {aviso && (
-              <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded-xl">
-                ⚠️ {aviso}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ============================================================
-            QUESTÕES
-            ============================================================ */}
-        {questoes.length > 0 && !mostrarResultado && (
-          <div className="space-y-4">
-            <div className={`${cardBg} ${cardShadow} rounded-2xl p-4 sticky top-[72px] z-10 transition-colors duration-300`}>
-              <div className="flex justify-between items-center">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  📝 {Object.keys(respostas).length} de {questoes.length} respondidas
-                </span>
-                {todasRespondidas && (
-                  <button
-                    onClick={finalizarProva}
-                    className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-6 py-2 rounded-xl transition-all duration-200 animate-fade-in"
-                  >
-                    ✅ Ver Resultado
-                  </button>
-                )}
-              </div>
-              <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full mt-2 overflow-hidden">
-                <div 
-                  className="h-full bg-blue-600 dark:bg-blue-400 transition-all duration-500 rounded-full"
-                  style={{ width: `${(Object.keys(respostas).length / questoes.length) * 100}%` }}
-                />
-              </div>
-              {!todasRespondidas && Object.keys(respostas).length > 0 && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  ⚠️ Responda todas as {questoes.length} questões para ver o resultado
-                </p>
-              )}
-            </div>
-
-            {questoes.map((q, indice) => (
-              <div key={indice} className={`${cardBg} ${cardShadow} rounded-2xl p-6 transition-colors duration-300`}>
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="font-bold text-lg text-blue-600 dark:text-blue-400">
-                    Questão {indice + 1}
-                  </h3>
-                  {respostas[indice] && (
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full">
-                      Respondida
-                    </span>
-                  )}
-                </div>
-                <p className="mb-4 text-gray-800 dark:text-gray-200">{q.pergunta}</p>
-                
-                <div className="space-y-2">
-                  {['A', 'B', 'C', 'D'].map((letra) => (
-                    <label 
-                      key={letra} 
-                      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${
-                        respostas[indice] === letra 
-                          ? 'bg-blue-100 dark:bg-blue-900/40 border-2 border-blue-500 dark:border-blue-400' 
-                          : `${hoverBg} border-2 border-transparent`
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name={`questao-${indice}`}
-                        value={letra}
-                        checked={respostas[indice] === letra}
-                        onChange={() => responderQuestao(indice, letra)}
-                        className="w-4 h-4 accent-blue-600"
-                      />
-                      <span className="font-bold text-gray-700 dark:text-gray-300">{letra})</span>
-                      <span className="text-gray-800 dark:text-gray-200">{q.opcoes[letra as keyof typeof q.opcoes]}</span>
-                    </label>
+                {/* Grid de Categorias */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                  {CATEGORIAS.map((cat) => (
+                    <CategoryCard
+                      key={cat.nome}
+                      name={cat.nome}
+                      isSelected={categoriaSelecionada === cat.nome}
+                      onClick={() => {
+                        setCategoriaSelecionada(cat.nome);
+                        setModoEntrada(cat.conteudo ? 'categoria' : 'texto');
+                      }}
+                    />
                   ))}
                 </div>
-              </div>
-            ))}
 
+                {/* Modo Texto */}
+                {modoEntrada === 'texto' && (
+                  <div className="animate-fade-in mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                      ✍️ Digite seu conteúdo programático:
+                    </label>
+                    <textarea
+                      value={conteudo}
+                      onChange={(e) => setConteudo(e.target.value)}
+                      placeholder="Cole aqui o conteúdo do edital, matérias, leis, etc."
+                      className="w-full h-56 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono text-sm"
+                    />
+                    <div className="flex justify-between items-center mt-3 text-sm">
+                      <span className="text-gray-600 dark:text-gray-400">{conteudo.length} caracteres</span>
+                      {conteudo.length > 0 && conteudo.length < 50 && (
+                        <span className="badge badge-warning">Mínimo 50 caracteres</span>
+                      )}
+                      {conteudo.length >= 50 && (
+                        <span className="badge badge-success">✓ Pronto</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quantidade de Questões */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                    Quantidade de questões:
+                  </label>
+                  <div className="grid grid-cols-4 gap-3">
+                    {[20, 40, 60, 80].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setQuantidade(num)}
+                        className={`py-3 rounded-lg font-semibold transition-all ${
+                          quantidade === num
+                            ? 'btn-primary ring-2 ring-offset-2 ring-orange-500 dark:ring-offset-slate-900 scale-105'
+                            : 'bg-gray-100 dark:bg-slate-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-slate-700'
+                        }`}
+                        disabled={carregando}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botão Gerar */}
+                <button
+                  onClick={handleGerarSimulado}
+                  disabled={carregando || !categoriaSelecionada || (modoEntrada === 'texto' && conteudo.length < 50)}
+                  className="w-full btn-accent text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                >
+                  {carregando ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="animate-spin">⏳</span> Gerando {quantidade} questões...
+                    </span>
+                  ) : (
+                    `🚀 Gerar Simulado (${quantidade} questões)`
+                  )}
+                </button>
+
+                {/* Mensagens de erro e aviso */}
+                {erro && (
+                  <div className="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 rounded-lg text-sm">
+                    {erro}
+                  </div>
+                )}
+                {aviso && (
+                  <div className="mt-4 p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded-lg text-sm">
+                    {aviso}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Sidebar com Anúncio */}
+            <div>
+              <AdSpace type="sidebar" className="sticky top-24" />
+            </div>
+          </div>
+        ) : null}
+
+        {/* Seção de Questões */}
+        {questoes.length > 0 && !mostrarResultado && (
+          <div className="space-y-6">
+            <Breadcrumb items={[
+              { label: 'Categorias', active: false },
+              { label: 'Simulado', active: true }
+            ]} />
+
+            <ProgressBar 
+              current={Object.keys(respostas).length} 
+              total={questoes.length}
+              answered={Object.keys(respostas).length}
+            />
+
+            {/* Questões */}
+            <div className="space-y-4">
+              {questoes.map((q, indice) => (
+                <div key={indice} className="card">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                      Questão {indice + 1}
+                    </h3>
+                    {respostas[indice] && (
+                      <span className="badge badge-success">✓ Respondida</span>
+                    )}
+                  </div>
+
+                  <p className="text-gray-900 dark:text-white mb-6 font-medium">{q.pergunta}</p>
+
+                  <div className="space-y-3">
+                    {['A', 'B', 'C', 'D'].map((letra) => (
+                      <label
+                        key={letra}
+                        className={`flex items-center gap-3 p-4 rounded-lg cursor-pointer transition-all border-2 ${
+                          respostas[indice] === letra
+                            ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/30'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-orange-300 dark:hover:border-orange-700'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name={`questao-${indice}`}
+                          value={letra}
+                          checked={respostas[indice] === letra}
+                          onChange={() => responderQuestao(indice, letra)}
+                          className="w-4 h-4 accent-orange-500"
+                        />
+                        <span className="font-bold text-gray-700 dark:text-gray-300">{letra})</span>
+                        <span className="text-gray-800 dark:text-gray-200">{q.opcoes[letra as keyof typeof q.opcoes]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Botão Finalizar */}
             {todasRespondidas && (
-              <div className="flex justify-center mt-6 animate-fade-in">
+              <div className="flex justify-center mt-8">
                 <button
                   onClick={finalizarProva}
-                  className="bg-green-600 hover:bg-green-700 active:scale-95 text-white px-8 py-4 rounded-2xl text-xl font-semibold transition-all duration-200 shadow-lg shadow-green-600/30"
+                  className="btn-secondary text-lg py-4 px-8 animate-pulse"
                 >
                   ✅ Ver Resultado Final
                 </button>
@@ -756,81 +594,95 @@ export default function Home() {
           </div>
         )}
 
-        {/* ============================================================
-            RESULTADO
-            ============================================================ */}
+        {/* Resultado */}
         {mostrarResultado && (
-          <div className={`${cardBg} ${cardShadow} rounded-2xl p-6 mt-8 transition-colors duration-300`}>
-            <div id="conteudo-para-pdf">
-              <h2 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">
-                🏆 Resultado Final
-              </h2>
-              
-              <div className="text-center mb-8">
-                <div className="text-6xl font-bold text-blue-600 dark:text-blue-400">
-                  {calcularResultado()} / {questoes.length}
-                </div>
-                <div className="text-xl mt-2">
-                  {calcularResultado() >= Math.round(questoes.length * 0.7) ? (
-                    <span className="text-green-600 dark:text-green-400">✅ Aprovado! 🎉</span>
-                  ) : (
-                    <span className="text-red-600 dark:text-red-400">❌ Continue estudando! 💪</span>
-                  )}
-                </div>
-                <div className="text-gray-500 dark:text-gray-400">
-                  {Math.round((calcularResultado() / questoes.length) * 100)}% de acertos
+          <div className="space-y-6">
+            <Breadcrumb items={[
+              { label: 'Categorias', active: false },
+              { label: 'Simulado', active: false },
+              { label: 'Resultado', active: true }
+            ]} />
+
+            <div className="card">
+              <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+                  🏆 Resultado Final
+                </h2>
+
+                <div className="inline-block mb-6">
+                  <div className="text-7xl font-bold bg-gradient-to-r from-orange-500 to-purple-500 bg-clip-text text-transparent mb-4">
+                    {calcularResultado()}/{questoes.length}
+                  </div>
+                  <div className="text-2xl font-semibold">
+                    {calcularResultado() >= Math.round(questoes.length * 0.7) ? (
+                      <span className="text-green-600 dark:text-green-400">✅ Aprovado! 🎉</span>
+                    ) : (
+                      <span className="text-orange-600 dark:text-orange-400">Continue estudando! 💪</span>
+                    )}
+                  </div>
+                  <p className="text-gray-600 dark:text-gray-400 text-lg mt-2">
+                    {Math.round((calcularResultado() / questoes.length) * 100)}% de acertos
+                  </p>
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">📖 Gabarito Comentado</h3>
+              {/* Anúncio pós-teste */}
+              <div className="my-8">
+                <AdSpace type="bottom" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                📖 Gabarito Comentado
+              </h3>
+
               <div className="space-y-6 max-h-96 overflow-y-auto">
                 {questoes.map((q, i) => {
                   const respostaUsuario = respostas[i] || 'Não respondeu';
                   const acertou = respostaUsuario === q.correta;
-                  
+
                   return (
-                    <div key={i} className={`border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'} pb-4`}>
-                      <p className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                        {i+1}. {q.pergunta}
+                    <div key={i} className="border-b border-gray-200 dark:border-gray-700 pb-6">
+                      <p className="font-semibold text-gray-900 dark:text-white mb-4">
+                        {i + 1}. {q.pergunta}
                       </p>
-                      
-                      <div className="mt-2 space-y-1.5">
+
+                      <div className="space-y-2 mb-4">
                         {['A', 'B', 'C', 'D'].map((letra) => {
                           const isCorreta = letra === q.correta;
                           const isMarcada = respostaUsuario === letra;
-                          
-                          let cor = 'text-gray-600 dark:text-gray-400';
-                          let bgCor = '';
-                          let borda = '';
-                          
+
+                          let borderColor = 'border-gray-200 dark:border-gray-700';
+                          let bgColor = '';
+                          let textColor = 'text-gray-600 dark:text-gray-400';
+
                           if (isCorreta && isMarcada) {
-                            cor = 'text-green-700 dark:text-green-300';
-                            bgCor = 'bg-green-50 dark:bg-green-900/20';
-                            borda = 'border-green-500 dark:border-green-400';
+                            borderColor = 'border-green-500 dark:border-green-400';
+                            bgColor = 'bg-green-50 dark:bg-green-950/30';
+                            textColor = 'text-green-700 dark:text-green-300';
                           } else if (isCorreta) {
-                            cor = 'text-green-700 dark:text-green-300';
-                            bgCor = 'bg-green-50 dark:bg-green-900/10';
-                            borda = 'border-green-500 dark:border-green-400';
+                            borderColor = 'border-green-500 dark:border-green-400';
+                            bgColor = 'bg-green-50 dark:bg-green-950/10';
+                            textColor = 'text-green-700 dark:text-green-300';
                           } else if (isMarcada && !isCorreta) {
-                            cor = 'text-red-700 dark:text-red-300';
-                            bgCor = 'bg-red-50 dark:bg-red-900/20';
-                            borda = 'border-red-500 dark:border-red-400';
+                            borderColor = 'border-red-500 dark:border-red-400';
+                            bgColor = 'bg-red-50 dark:bg-red-950/20';
+                            textColor = 'text-red-700 dark:text-red-300';
                           }
-                          
+
                           return (
-                            <div 
-                              key={letra} 
-                              className={`flex items-center gap-3 p-2.5 rounded-lg border ${borda} ${bgCor} transition-colors duration-200`}
+                            <div
+                              key={letra}
+                              className={`flex items-center gap-3 p-3 rounded-lg border-2 ${borderColor} ${bgColor}`}
                             >
-                              <span className={`font-bold ${cor}`}>{letra})</span>
-                              <span className={cor}>{q.opcoes[letra as keyof typeof q.opcoes]}</span>
+                              <span className={`font-bold ${textColor}`}>{letra})</span>
+                              <span className={textColor}>{q.opcoes[letra as keyof typeof q.opcoes]}</span>
                               {isMarcada && !isCorreta && (
-                                <span className="ml-auto text-sm text-red-600 dark:text-red-400 font-medium">
+                                <span className="ml-auto text-sm font-medium text-red-600 dark:text-red-400">
                                   ❌ Sua resposta
                                 </span>
                               )}
                               {isCorreta && (
-                                <span className="ml-auto text-sm text-green-600 dark:text-green-400 font-medium">
+                                <span className="ml-auto text-sm font-medium text-green-600 dark:text-green-400">
                                   ✅ Correta
                                 </span>
                               )}
@@ -838,48 +690,44 @@ export default function Home() {
                           );
                         })}
                       </div>
-                      
-                      <div className="mt-3 space-y-1">
-                        <p className="text-green-600 dark:text-green-400 font-medium">
-                          ✅ Correta: {q.correta}
+
+                      <div className="space-y-2 text-sm">
+                        <p className="font-semibold text-green-600 dark:text-green-400">
+                          ✅ Gabarito: {q.correta}
                         </p>
-                        <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-2 rounded-xl">
+                        <p className="text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg">
                           💡 {q.explicacao}
                         </p>
-                        <p className={`text-sm font-medium ${acertou ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {acertou ? '✅ Você acertou!' : `❌ Você errou. A resposta correta é ${q.correta}`}
+                        <p className={`font-medium ${acertou ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {acertou ? '✅ Você acertou!' : `❌ Você errou. Resposta correta: ${q.correta}`}
                         </p>
                       </div>
                     </div>
                   );
                 })}
               </div>
-            </div>
 
-            <div className="space-y-3 mt-6">
-              <button
-                onClick={exportarPDF}
-                className="w-full bg-purple-600 hover:bg-purple-700 active:scale-95 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-all duration-200"
-              >
-                📄 Exportar PDF
-              </button>
-              <button
-                onClick={reiniciar}
-                className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-6 py-3 rounded-xl text-lg font-semibold transition-all duration-200"
-              >
-                🔄 Novo Simulado
-              </button>
+              {/* Botões de ação */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                <button
+                  onClick={exportarPDF}
+                  className="btn-secondary text-lg py-4 font-semibold"
+                >
+                  📄 Exportar PDF
+                </button>
+                <button
+                  onClick={reiniciar}
+                  className="btn-primary text-lg py-4 font-semibold"
+                >
+                  🔄 Novo Simulado
+                </button>
+              </div>
             </div>
           </div>
         )}
+      </main>
 
-        {/* ============================================================
-            RODAPÉ
-            ============================================================ */}
-        <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>Criado com ❤️por KASEMIRO</p>
-        </div>
-      </div>
-    </main>
+      <Footer />
+    </div>
   );
 }
