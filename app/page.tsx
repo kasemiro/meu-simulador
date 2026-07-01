@@ -66,21 +66,7 @@ const CATEGORIAS = [
 ];
 
 const FEATURES = [
-  {
-    icon: '🤖',
-    title: 'Gerado por IA',
-    description: 'Questões inéditas criadas sob medida para o seu estudo.'
-  },
-  {
-    icon: '🎯',
-    title: 'Foco no concurso',
-    description: 'Matérias mais cobradas nas principais provas do país.'
-  },
-  {
-    icon: '⚡',
-    title: 'Correção Instantânea',
-    description: 'Veja a resposta certa e a explicação a cada questão.'
-  }
+
 ];
 
 export default function Home() {
@@ -297,8 +283,6 @@ export default function Home() {
           </div>
         </section>
 
-        <AdSpace type="top" className="my-8" />
-
         {/* Formulário */}
         <section ref={formRef} className="py-16 sm:py-24 bg-gray-50">
           <div className="container-custom max-w-2xl">
@@ -457,6 +441,8 @@ export default function Home() {
           </>
         ) : (
           <>
+            <AdSpace type="top" className="my-8" />
+            
             {/* Resultado */}
             <div className="max-w-3xl mx-auto">
               <div className="text-center mb-12 p-8 bg-blue-50 rounded-lg">
