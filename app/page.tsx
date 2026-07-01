@@ -20,7 +20,8 @@ type Questao = {
 
 const CATEGORIAS = [
   {
-    nome: '📚 Língua Portuguesa',
+    nome: 'Língua Portuguesa',
+    descricao: 'Gramática, interpretação e ortografia',
     conteudo: `Língua Portuguesa para concursos públicos:
 
     1. Interpretação de Texto: A princípio, a interpretação de texto envolve análise e compreensão, considerando a palavra e seu significado (sinonímia, antonímia e ambiguidade). Além disso, os níveis da significação (denotação e conotação) e as figuras de linguagem são amplamente cobrados. Portanto, praticar com textos variados é essencial.
@@ -32,7 +33,8 @@ const CATEGORIAS = [
     4. Sintaxe: A princípio, a sintaxe trata do sujeito e do predicado e suas respectivas classificações, da transitividade dos verbos e da complementação. Além disso, abrange frase, oração, período e suas classificações, além da concordância e da regência em todas as suas formas.`
   },
   {
-    nome: '🔢 Matemática',
+    nome: 'Matemática',
+    descricao: 'Raciocínio lógico e cálculo',
     conteudo: `Matemática para concursos públicos:
 
     1. Números Naturais: A princípio, o conjunto dos números naturais é a base da matemática. Além disso, envolve representação geométrica, comparação e os sistemas atuais de numeração. As operações fundamentais (adição, subtração, multiplicação e divisão) são essenciais.
@@ -42,7 +44,8 @@ const CATEGORIAS = [
     3. Aritmética Básica: Sobretudo, a aritmética básica compreende as operações fundamentais.`
   },
   {
-    nome: '📖 Pedagogia',
+    nome: 'Pedagogia',
+    descricao: 'Teorias e práticas de ensino',
     conteudo: `Pedagogia para concursos públicos:
 
 1. Legislação Educacional: LDB (Lei nº 9.394/96), ECA (Estatuto da Criança e do Adolescente), BNCC (Base Nacional Comum Curricular).
@@ -52,7 +55,8 @@ const CATEGORIAS = [
 3. Didática e Organização Escolar: Planejamento participativo, PPP, currículo, avaliação formativa.`
   },
   {
-    nome: '🏛️ História',
+    nome: 'História',
+    descricao: 'Brasil e história geral',
     conteudo: `História para concursos públicos:
 
     1. Avaliação da Aprendizagem: A princípio, a avaliação da aprendizagem é um processo contínuo que visa verificar o desenvolvimento do aluno.
@@ -60,18 +64,33 @@ const CATEGORIAS = [
     2. Didática e Trabalho Pedagógico: Agora, a didática é o campo que estuda os métodos e técnicas de ensino.`
   },
   {
-    nome: '✍️ Escrever meu próprio conteúdo',
+    nome: 'Meu próprio conteúdo',
+    descricao: 'Cole seu material de estudo',
     conteudo: null
   }
 ];
 
 const FEATURES = [
-
+  {
+    icon: '⚙️',
+    title: 'Gerado por IA',
+    description: 'Questões inéditas criadas sob medida para o seu estudo.'
+  },
+  {
+    icon: '🎯',
+    title: 'Foco no concurso',
+    description: 'Matérias mais cobradas nas principais provas do país.'
+  },
+  {
+    icon: '⚡',
+    title: 'Correção instantânea',
+    description: 'Veja a resposta certa e a explicação a cada questão.'
+  }
 ];
 
 export default function Home() {
   const [conteudo, setConteudo] = useState('');
-  const [quantidade, setQuantidade] = useState(10);
+  const [quantidade, setQuantidade] = useState(40);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
   const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto'>('categoria');
   const [carregando, setCarregando] = useState(false);
@@ -98,38 +117,32 @@ export default function Home() {
     }
   }, [darkMode]);
 
-  const handleGerarSimulado = async () => {
-    let textoParaEnviar = '';
-
-    if (modoEntrada === 'categoria') {
-      const categoria = CATEGORIAS.find(c => c.nome === categoriaSelecionada);
-      if (!categoria || !categoria.conteudo) {
-        setErro('Selecione uma categoria válida ou escolha "Escrever meu próprio conteúdo".');
-        return;
-      }
-      textoParaEnviar = categoria.conteudo;
-    } else {
-      if (!conteudo.trim()) {
-        setErro('Digite ou cole o conteúdo programático!');
-        return;
-      }
-      if (conteudo.trim().length < 50) {
-        setErro('Digite pelo menos 50 caracteres!');
-        return;
-      }
-      textoParaEnviar = conteudo.trim();
+  const gerarQuestoes = async () => {
+    if (!categoriaSelecionada && modoEntrada === 'categoria') {
+      setErro('Selecione uma matéria para começar.');
+      return;
     }
 
-    setErro('');
+    if (!conteudo && modoEntrada === 'texto') {
+      setErro('Cole seu material de estudo para começar.');
+      return;
+    }
+
     setCarregando(true);
+    setErro('');
 
     try {
+      const categoria = CATEGORIAS.find((c) => c.nome === categoriaSelecionada);
+      const conteudoParaProcessar =
+        modoEntrada === 'texto' ? conteudo : categoria?.conteudo || '';
+
       const response = await fetch('/api/gerar-questoes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          conteudo: textoParaEnviar,
-          quantidade: quantidade,
+          conteudo: conteudoParaProcessar,
+          quantidade,
+          categoria: categoriaSelecionada,
         }),
       });
 
@@ -141,37 +154,25 @@ export default function Home() {
       setQuestoes(data.questoes);
       setRespostas({});
       setMostrarResultado(false);
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Erro ao gerar questões');
+    } catch (err) {
+      setErro('Erro ao gerar questões. Tente novamente.');
+      console.error(err);
     } finally {
       setCarregando(false);
     }
   };
 
-  const handleResponder = (indexQuestao: number, resposta: string) => {
-    setRespostas(prev => ({
-      ...prev,
-      [indexQuestao]: resposta
-    }));
-  };
+  const calcularResultado = () => {
+    const acertos = Object.entries(respostas).filter(
+      ([index, resposta]) =>
+        resposta === questoes[parseInt(index)].correta
+    ).length;
 
-  const handleFinalizarProva = () => {
-    if (Object.keys(respostas).length === 0) {
-      setErro('Responda pelo menos uma questão!');
-      return;
-    }
-    setMostrarResultado(true);
-  };
-
-  const handleNovaProva = () => {
-    setQuestoes([]);
-    setRespostas({});
-    setMostrarResultado(false);
-    setConteudo('');
-    setCategoriaSelecionada('');
-    if (formRef.current) {
-      formRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    return {
+      acertos,
+      total: questoes.length,
+      percentual: Math.round((acertos / questoes.length) * 100),
+    };
   };
 
   const downloadGabarito = () => {
@@ -210,300 +211,335 @@ export default function Home() {
     doc.save('gabarito-simulado.pdf');
   };
 
-  const acertos = Object.entries(respostas).filter(
-    ([idx, resp]) => resp === questoes[parseInt(idx)].correta
-  ).length;
+  if (mostrarResultado && questoes.length > 0) {
+    const { acertos, total, percentual } = calcularResultado();
 
-  const percentualAcerto = questoes.length > 0 ? Math.round((acertos / questoes.length) * 100) : 0;
-
-  // Se não tem questões geradas, mostra landing page
-  if (questoes.length === 0 && !mostrarResultado) {
     return (
-      <div className="bg-white">
-        <Header 
-          darkMode={darkMode} 
-          onToggleDarkMode={setDarkMode}
-          onComecode={() => {
-            if (formRef.current) {
-              formRef.current.scrollIntoView({ behavior: 'smooth' });
-            }
-          }}
-        />
+      <div className="min-h-screen bg-white">
+        <Header darkMode={darkMode} onToggleDarkMode={setDarkMode} />
 
-        {/* Hero Section */}
-        <section className="bg-gradient-to-b from-blue-50 to-white py-20 sm:py-32">
-          <div className="container-custom text-center">
-            {/* Badge */}
-            <div className="inline-block mb-8">
-              <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium border border-blue-200">
-                <span>✨</span>
-                Estude de forma inteligente
-              </span>
-            </div>
+        <div className="container-custom py-16">
+          <AdSpace type="top" className="my-8" />
 
-            {/* Título */}
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-8 leading-tight max-w-4xl mx-auto">
-              Simulados de concurso gerados por Inteligência Artificial
-            </h2>
+          <div className="max-w-3xl mx-auto">
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-12 text-center mb-12">
+              <div className="text-6xl font-bold text-blue-600 mb-4">
+                {percentual}%
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                {acertos} de {total} questões corretas
+              </h2>
+              <p className="text-gray-600 mb-8">
+                {percentual >= 70
+                  ? 'Parabéns! Você está no caminho certo!'
+                  : 'Estude um pouco mais e você consegue!'}
+              </p>
 
-            {/* Descrição */}
-            <p className="text-lg sm:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-              Escolha a matéria, defina a quantidade de questões e pratique com correção e explicações em tempo real. Tudo gratuito.
-            </p>
-
-            {/* CTA Button */}
-            <button
-              onClick={() => {
-                if (formRef.current) {
-                  formRef.current.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-block shadow-lg hover:shadow-xl"
-            >
-              Começar Agora
-            </button>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-16 sm:py-24 bg-white border-t border-gray-100">
-          <div className="container-custom">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-              {FEATURES.map((feature, idx) => (
-                <div 
-                  key={idx} 
-                  className="p-6 sm:p-8 border border-gray-200 rounded-lg hover:shadow-md transition-all hover:border-gray-300"
-                >
-                  <div className="text-5xl mb-5">{feature.icon}</div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Formulário */}
-        <section ref={formRef} className="py-16 sm:py-24 bg-gray-50">
-          <div className="container-custom max-w-2xl">
-            <h3 className="text-3xl font-bold text-gray-900 mb-8 text-center">Gerar Simulado</h3>
-
-            <div className="bg-white rounded-lg border border-gray-200 p-6 sm:p-8">
-              {/* Toggle Modo */}
-              <div className="flex gap-4 mb-8">
+              <div className="flex gap-4 justify-center">
                 <button
-                  onClick={() => setModoEntrada('categoria')}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-                    modoEntrada === 'categoria'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  onClick={() => {
+                    setMostrarResultado(false);
+                    setQuestoes([]);
+                    setRespostas({});
+                    if (formRef.current) {
+                      formRef.current.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
                 >
-                  Categorias
+                  Novo Simulado
                 </button>
                 <button
-                  onClick={() => setModoEntrada('texto')}
-                  className={`flex-1 py-3 px-4 rounded-lg font-medium transition-colors ${
-                    modoEntrada === 'texto'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
+                  onClick={downloadGabarito}
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-900 px-6 py-2 rounded-lg font-medium transition-colors"
                 >
-                  Meu Conteúdo
+                  Baixar Gabarito
                 </button>
               </div>
+            </div>
 
-              {/* Modo Categoria */}
-              {modoEntrada === 'categoria' && (
-                <div className="mb-8">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Selecione uma matéria
-                  </label>
-                  <select
-                    value={categoriaSelecionada}
-                    onChange={(e) => setCategoriaSelecionada(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  >
-                    <option value="">Escolha uma opção...</option>
-                    {CATEGORIAS.map(cat => (
-                      <option key={cat.nome} value={cat.nome}>
-                        {cat.nome}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+            <div className="space-y-4">
+              {questoes.map((questao, index) => {
+                const respostaUsuario = respostas[index];
+                const acertou = respostaUsuario === questao.correta;
 
-              {/* Modo Texto */}
-              {modoEntrada === 'texto' && (
-                <div className="mb-8">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Cole o conteúdo programático
-                  </label>
-                  <textarea
-                    value={conteudo}
-                    onChange={(e) => setConteudo(e.target.value)}
-                    placeholder="Digite ou cole o conteúdo aqui..."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none"
-                    rows={6}
-                  />
-                </div>
-              )}
+                return (
+                  <div key={index} className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 ${
+                          acertou ? 'bg-green-500' : 'bg-red-500'
+                        }`}
+                      >
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 mb-4">
+                          {questao.pergunta}
+                        </p>
 
-              {/* Quantidade de Questões */}
-              <div className="mb-8">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Quantidade de questões: {quantidade}
-                </label>
-                <input
-                  type="range"
-                  min="5"
-                  max="50"
-                  step="5"
-                  value={quantidade}
-                  onChange={(e) => setQuantidade(parseInt(e.target.value))}
-                  className="w-full"
-                />
-              </div>
+                        <div className="space-y-2 mb-4">
+                          {Object.entries(questao.opcoes).map(([letra, texto]) => {
+                            const isCorreta = letra === questao.correta;
+                            const isUserAnswer = letra === respostaUsuario;
 
-              {/* Erro */}
-              {erro && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                  {erro}
-                </div>
-              )}
+                            return (
+                              <div
+                                key={letra}
+                                className={`p-3 rounded border ${
+                                  isCorreta
+                                    ? 'bg-green-50 border-green-200'
+                                    : isUserAnswer && !acertou
+                                      ? 'bg-red-50 border-red-200'
+                                      : 'bg-gray-50 border-gray-200'
+                                }`}
+                              >
+                                <span className="font-semibold">{letra}.</span> {texto}
+                              </div>
+                            );
+                          })}
+                        </div>
 
-              {/* Botão */}
-              <button
-                onClick={handleGerarSimulado}
-                disabled={carregando}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
-              >
-                {carregando ? 'Gerando questões...' : 'Gerar Simulado'}
-              </button>
+                        <div className="bg-blue-50 border border-blue-200 rounded p-4">
+                          <p className="text-sm font-semibold text-blue-900 mb-2">
+                            Explicação:
+                          </p>
+                          <p className="text-sm text-blue-800">{questao.explicacao}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </section>
+
+          <AdSpace type="bottom" className="my-8" />
+        </div>
 
         <Footer />
       </div>
     );
   }
 
-  // Se tem questões, mostra as questões
   return (
-    <div className="bg-white min-h-screen">
-      <Header 
-        darkMode={darkMode} 
-        onToggleDarkMode={setDarkMode}
-      />
+    <div className="min-h-screen bg-white">
+      <Header darkMode={darkMode} onToggleDarkMode={setDarkMode} />
 
-      <main className="container-custom py-8 sm:py-12">
-        {!mostrarResultado ? (
-          <>
-            {/* Questões */}
-            <div className="max-w-3xl mx-auto">
-              {questoes.map((questao, idx) => (
-                <div key={idx} className="mb-8 p-6 border border-gray-200 rounded-lg">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="inline-block w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                      {idx + 1}
+      {/* Hero Section */}
+      <section className="bg-blue-50 py-20">
+        <div className="container-custom text-center">
+          <div className="inline-block mb-8">
+            <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium border border-blue-200">
+              <span>⭐</span>
+              Estude de forma inteligente
+            </span>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-8 leading-tight max-w-4xl mx-auto">
+            Simulados de concurso gerados por Inteligência Artificial
+          </h1>
+
+          <p className="text-lg sm:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+            Escolha a matéria, defina a quantidade de questões e pratique com correção e explicações em tempo real. Tudo gratuito.
+          </p>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 sm:py-24 bg-white border-t border-gray-100">
+        <div className="container-custom">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+            {FEATURES.map((feature, idx) => (
+              <div 
+                key={idx} 
+                className="p-6 sm:p-8 border border-gray-200 rounded-lg hover:shadow-md transition-all hover:border-gray-300"
+              >
+                <div className="text-5xl mb-5">{feature.icon}</div>
+                <h3 className="text-lg font-bold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Publicidade */}
+      <div className="container-custom py-4">
+        <AdSpace type="top" className="my-0" />
+      </div>
+
+      {/* Main Content */}
+      <main className="bg-white">
+        <div className="container-custom py-16 sm:py-24">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Formulário Principal */}
+            <div className="lg:col-span-2">
+              <div ref={formRef}>
+                {/* PASSO 1 */}
+                <div className="mb-12">
+                  <div className="mb-6">
+                    <span className="text-sm font-semibold text-gray-500 uppercase">
+                      Passo 1
                     </span>
-                    <h3 className="font-semibold text-gray-900">{questao.pergunta}</h3>
+                    <h2 className="text-2xl font-bold text-gray-900 mt-2">
+                      Escolha uma matéria ou seu conteúdo
+                    </h2>
                   </div>
 
-                  <div className="space-y-2 ml-11">
-                    {Object.entries(questao.opcoes).map(([letra, texto]) => (
-                      <label key={letra} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors">
-                        <input
-                          type="radio"
-                          name={`questao-${idx}`}
-                          value={letra}
-                          checked={respostas[idx] === letra}
-                          onChange={() => handleResponder(idx, letra)}
-                          className="w-4 h-4"
-                        />
-                        <span className="font-medium text-gray-700">{letra})</span>
-                        <span className="text-gray-600">{texto}</span>
-                      </label>
+                  <div className="grid grid-cols-1 gap-3">
+                    {CATEGORIAS.map((categoria) => (
+                      <button
+                        key={categoria.nome}
+                        onClick={() => {
+                          setCategoriaSelecionada(categoria.nome);
+                          setModoEntrada('categoria');
+                          setConteudo('');
+                          setErro('');
+                        }}
+                        className={`p-4 text-left rounded-lg border-2 transition-all ${
+                          categoriaSelecionada === categoria.nome
+                            ? 'border-blue-600 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      >
+                        <div className="font-semibold text-gray-900">
+                          {categoria.nome}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          {categoria.descricao}
+                        </div>
+                      </button>
                     ))}
                   </div>
                 </div>
-              ))}
 
-              <button
-                onClick={handleFinalizarProva}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
-              >
-                Finalizar Prova
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            <AdSpace type="top" className="my-8" />
-            
-            {/* Resultado */}
-            <div className="max-w-3xl mx-auto">
-              <div className="text-center mb-12 p-8 bg-blue-50 rounded-lg">
-                <div className="text-6xl font-bold text-blue-600 mb-2">{percentualAcerto}%</div>
-                <p className="text-2xl font-semibold text-gray-900 mb-2">
-                  {acertos} de {questoes.length} questões corretas
-                </p>
-                <p className="text-gray-600">
-                  {percentualAcerto >= 70 ? '🎉 Excelente desempenho!' : percentualAcerto >= 50 ? '👍 Bom desempenho!' : '💪 Continue praticando!'}
-                </p>
-              </div>
+                {/* PASSO 2 */}
+                <div className="mb-12">
+                  <div className="mb-6">
+                    <span className="text-sm font-semibold text-gray-500 uppercase">
+                      Passo 2
+                    </span>
+                    <h3 className="text-2xl font-bold text-gray-900 mt-2">
+                      Quantidade de questões
+                    </h3>
+                  </div>
 
-              <AdSpace type="bottom" className="my-8" />
+                  <div className="flex flex-wrap gap-3 mb-8">
+                    {[20, 40, 60, 80].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setQuantidade(num)}
+                        className={`px-6 py-2 rounded-lg font-medium transition-all ${
+                          quantidade === num
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
 
-              {/* Gabarito */}
-              <div className="space-y-4 mb-8">
-                {questoes.map((questao, idx) => {
-                  const respostaUsuario = respostas[idx];
-                  const acertou = respostaUsuario === questao.correta;
+                  <button
+                    onClick={gerarQuestoes}
+                    disabled={carregando || !categoriaSelecionada}
+                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                  >
+                    {carregando
+                      ? 'Gerando...'
+                      : `Gerar Simulado (${quantidade} questões)`}
+                  </button>
 
-                  return (
-                    <div key={idx} className={`p-6 border-l-4 rounded-lg ${
-                      acertou ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'
-                    }`}>
-                      <div className="flex items-start gap-3 mb-2">
-                        <span className="text-xl">{acertou ? '✓' : '✗'}</span>
-                        <div>
-                          <p className="font-semibold text-gray-900">Questão {idx + 1}</p>
-                          <p className="text-sm text-gray-600 mt-1">{questao.pergunta}</p>
-                        </div>
+                  {erro && (
+                    <p className="text-red-600 text-sm mt-4">{erro}</p>
+                  )}
+                </div>
+
+                {/* Questões */}
+                {questoes.length > 0 && !mostrarResultado && (
+                  <div className="mb-12">
+                    <div className="mb-8">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-2xl font-bold text-gray-900">
+                          Questão {Object.keys(respostas).length + 1} de {questoes.length}
+                        </h3>
+                        <button
+                          onClick={() => {
+                            setMostrarResultado(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        >
+                          Ver Resultado
+                        </button>
                       </div>
 
-                      <div className="ml-8 space-y-1 text-sm">
-                        <p><span className="font-medium">Sua resposta:</span> {respostaUsuario || 'Não respondida'}</p>
-                        <p><span className="font-medium">Resposta correta:</span> {questao.correta}</p>
-                        <p className="mt-3 text-gray-600 italic">{questao.explicacao}</p>
+                      {/* Progress Bar */}
+                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full bg-blue-600 transition-all duration-300"
+                          style={{
+                            width: `${((Object.keys(respostas).length + 1) / questoes.length) * 100}%`,
+                          }}
+                        />
                       </div>
                     </div>
-                  );
-                })}
-              </div>
 
-              {/* Botões */}
-              <div className="flex gap-4">
-                <button
-                  onClick={downloadGabarito}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
-                >
-                  📥 Baixar Gabarito
-                </button>
-                <button
-                  onClick={handleNovaProva}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
-                >
-                  ➕ Nova Prova
-                </button>
+                    {questoes.map((questao, index) => (
+                      <div key={index} className={`mb-12 ${index !== 0 ? 'hidden' : ''}`}>
+                        <p className="text-xl font-semibold text-gray-900 mb-6">
+                          {questao.pergunta}
+                        </p>
+
+                        <div className="space-y-3">
+                          {Object.entries(questao.opcoes).map(([letra, texto]) => (
+                            <button
+                              key={letra}
+                              onClick={() => {
+                                setRespostas({ ...respostas, [index]: letra });
+                                if (index < questoes.length - 1) {
+                                  setTimeout(() => {
+                                    const nextQuestao = document.querySelector(
+                                      `[data-questao="${index + 1}"]`
+                                    );
+                                    if (nextQuestao) {
+                                      nextQuestao.scrollIntoView({ behavior: 'smooth' });
+                                    }
+                                  }, 300);
+                                }
+                              }}
+                              className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
+                                respostas[index] === letra
+                                  ? 'border-blue-600 bg-blue-50'
+                                  : 'border-gray-200 bg-white hover:border-gray-300'
+                              }`}
+                            >
+                              <span className="font-semibold">{letra}.</span> {texto}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          </>
-        )}
+
+            {/* Sidebar Publicidade */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-24 space-y-8">
+                <AdSpace type="sidebar" className="my-0" />
+                <AdSpace type="sidebar" className="my-0" />
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
+
+      {/* Publicidade Rodapé */}
+      <div className="container-custom py-8">
+        <AdSpace type="bottom" className="my-0" />
+      </div>
 
       <Footer />
     </div>
