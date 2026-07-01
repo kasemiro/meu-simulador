@@ -20,7 +20,9 @@ type Questao = {
 
 const CATEGORIAS = [
   {
+    id: 'portugues',
     nome: 'Língua Portuguesa',
+    icon: '📖',
     descricao: 'Gramática, interpretação e ortografia',
     conteudo: `Língua Portuguesa para concursos públicos:
 
@@ -33,7 +35,9 @@ const CATEGORIAS = [
     4. Sintaxe: A princípio, a sintaxe trata do sujeito e do predicado e suas respectivas classificações, da transitividade dos verbos e da complementação. Além disso, abrange frase, oração, período e suas classificações, além da concordância e da regência em todas as suas formas.`
   },
   {
+    id: 'matematica',
     nome: 'Matemática',
+    icon: '📊',
     descricao: 'Raciocínio lógico e cálculo',
     conteudo: `Matemática para concursos públicos:
 
@@ -44,7 +48,9 @@ const CATEGORIAS = [
     3. Aritmética Básica: Sobretudo, a aritmética básica compreende as operações fundamentais.`
   },
   {
+    id: 'pedagogia',
     nome: 'Pedagogia',
+    icon: '🎓',
     descricao: 'Teorias e práticas de ensino',
     conteudo: `Pedagogia para concursos públicos:
 
@@ -55,16 +61,20 @@ const CATEGORIAS = [
 3. Didática e Organização Escolar: Planejamento participativo, PPP, currículo, avaliação formativa.`
   },
   {
+    id: 'historia',
     nome: 'História',
+    icon: '🏛️',
     descricao: 'Brasil e história geral',
     conteudo: `História para concursos públicos:
 
-    1. Avaliação da Aprendizagem: A princípio, a avaliação da aprendizagem é um processo contínuo que visa verificar o desenvolvimento do aluno.
+    1. História do Brasil: A princípio, a história do Brasil compreende desde o período colonial até os dias atuais.
 
     2. Didática e Trabalho Pedagógico: Agora, a didática é o campo que estuda os métodos e técnicas de ensino.`
   },
   {
+    id: 'customizado',
     nome: 'Meu próprio conteúdo',
+    icon: '✏️',
     descricao: 'Cole seu material de estudo',
     conteudo: null
   }
@@ -79,100 +89,109 @@ const FEATURES = [
   {
     icon: '🎯',
     title: 'Foco no concurso',
-    description: 'Matérias mais cobradas nas principais provas do país.'
+    description: 'Simulados de verdade com formato e dificuldade real.'
   },
   {
     icon: '⚡',
     title: 'Correção instantânea',
-    description: 'Veja a resposta certa e a explicação a cada questão.'
+    description: 'Veja suas respostas e aprenda com as explicações.'
   }
 ];
 
 export default function Home() {
-  const [conteudo, setConteudo] = useState('');
-  const [quantidade, setQuantidade] = useState(40);
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
-  const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto'>('categoria');
-  const [carregando, setCarregando] = useState(false);
-  const [questoes, setQuestoes] = useState<Questao[]>([]);
-  const [respostas, setRespostas] = useState<Record<number, string>>({});
-  const [mostrarResultado, setMostrarResultado] = useState(false);
-  const [erro, setErro] = useState('');
   const [darkMode, setDarkMode] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [questoes, setQuestoes] = useState<Questao[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [respostas, setRespostas] = useState<Record<number, string>>({});
+  const [showResults, setShowResults] = useState(false);
+  const [quantity, setQuantity] = useState(40);
+  const [customContent, setCustomContent] = useState('');
+  const [error, setError] = useState('');
   const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('darkMode');
-    if (saved) {
-      setDarkMode(saved === 'true');
+    if (typeof window !== 'undefined') {
+      const isDark = localStorage.getItem('darkMode') === 'true';
+      setDarkMode(isDark);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      }
     }
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('darkMode', String(darkMode));
-    if (darkMode) {
+  const toggleDarkMode = (value: boolean) => {
+    setDarkMode(value);
+    localStorage.setItem('darkMode', value.toString());
+    if (value) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [darkMode]);
+  };
 
   const gerarQuestoes = async () => {
-    if (!categoriaSelecionada && modoEntrada === 'categoria') {
-      setErro('Selecione uma matéria para começar.');
+    setError('');
+    if (!selectedCategory) {
+      setError('Selecione uma matéria para começar.');
       return;
     }
 
-    if (!conteudo && modoEntrada === 'texto') {
-      setErro('Cole seu material de estudo para começar.');
-      return;
-    }
-
-    setCarregando(true);
-    setErro('');
-
+    setLoading(true);
     try {
-      const categoria = CATEGORIAS.find((c) => c.nome === categoriaSelecionada);
-      const conteudoParaProcessar =
-        modoEntrada === 'texto' ? conteudo : categoria?.conteudo || '';
+      const categoria = CATEGORIAS.find(c => c.id === selectedCategory);
+      const conteudo = selectedCategory === 'customizado' ? customContent : categoria?.conteudo;
 
-      const response = await fetch('/api/gerar-questoes', {
+      if (!conteudo) {
+        setError('Selecione uma matéria para começar.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          conteudo: conteudoParaProcessar,
-          quantidade,
-          categoria: categoriaSelecionada,
-        }),
+          conteudo,
+          quantidade: quantity,
+          categoria: categoria?.nome || 'Customizado'
+        })
       });
 
-      if (!response.ok) {
-        throw new Error('Erro ao gerar questões');
-      }
+      if (!response.ok) throw new Error('Erro ao gerar questões');
 
       const data = await response.json();
       setQuestoes(data.questoes);
       setRespostas({});
-      setMostrarResultado(false);
+      setShowResults(false);
     } catch (err) {
-      setErro('Erro ao gerar questões. Tente novamente.');
+      setError('Erro ao gerar questões. Tente novamente.');
       console.error(err);
     } finally {
-      setCarregando(false);
+      setLoading(false);
     }
   };
 
-  const calcularResultado = () => {
-    const acertos = Object.entries(respostas).filter(
-      ([index, resposta]) =>
-        resposta === questoes[parseInt(index)].correta
-    ).length;
+  const handleResponder = (questionIndex: number, answer: string) => {
+    setRespostas({
+      ...respostas,
+      [questionIndex]: answer
+    });
+  };
 
-    return {
-      acertos,
-      total: questoes.length,
-      percentual: Math.round((acertos / questoes.length) * 100),
-    };
+  const finalizarSimulado = () => {
+    setShowResults(true);
+  };
+
+  const calculateStats = () => {
+    let acertos = 0;
+    questoes.forEach((questao, index) => {
+      if (respostas[index] === questao.correta) {
+        acertos++;
+      }
+    });
+    const percentual = Math.round((acertos / questoes.length) * 100);
+    return { acertos, total: questoes.length, percentual };
   };
 
   const downloadGabarito = () => {
@@ -211,337 +230,329 @@ export default function Home() {
     doc.save('gabarito-simulado.pdf');
   };
 
-  if (mostrarResultado && questoes.length > 0) {
-    const { acertos, total, percentual } = calcularResultado();
-
+  if (questoes.length === 0 || showResults) {
     return (
-      <div className="min-h-screen bg-white">
-        <Header darkMode={darkMode} onToggleDarkMode={setDarkMode} />
+      <div className={darkMode ? 'dark' : ''}>
+        <div className="min-h-screen bg-white dark:bg-gray-900">
+          <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />
 
-        <div className="container-custom py-16">
-          <AdSpace type="top" className="my-8" />
-
-          <div className="max-w-3xl mx-auto">
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-12 text-center mb-12">
-              <div className="text-6xl font-bold text-blue-600 mb-4">
-                {percentual}%
+          {/* Hero Section */}
+          <section className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-800 dark:to-gray-900 py-20 sm:py-32">
+            <div className="container-custom text-center">
+              <div className="inline-block mb-8">
+                <span className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-800">
+                  <span>✨</span>
+                  Estude de forma inteligente
+                </span>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                {acertos} de {total} questões corretas
+
+              <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-8 leading-tight max-w-4xl mx-auto">
+                Simulados de concurso gerados por Inteligência Artificial
               </h2>
-              <p className="text-gray-600 mb-8">
-                {percentual >= 70
-                  ? 'Parabéns! Você está no caminho certo!'
-                  : 'Estude um pouco mais e você consegue!'}
+
+              <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+                Escolha a matéria, defina a quantidade de questões e pratique com correção e explicações em tempo real. Tudo gratuito.
               </p>
 
-              <div className="flex gap-4 justify-center">
-                <button
-                  onClick={() => {
-                    setMostrarResultado(false);
-                    setQuestoes([]);
-                    setRespostas({});
-                    if (formRef.current) {
-                      formRef.current.scrollIntoView({ behavior: 'smooth' });
-                    }
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Novo Simulado
-                </button>
-                <button
-                  onClick={downloadGabarito}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-900 px-6 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Baixar Gabarito
-                </button>
+              <button
+                onClick={() => {
+                  setShowResults(false);
+                  setQuestoes([]);
+                  if (formRef.current) {
+                    formRef.current.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-block shadow-lg hover:shadow-xl"
+              >
+                Começar Agora
+              </button>
+            </div>
+          </section>
+
+          {/* Features Section */}
+          <section className="py-16 sm:py-24 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+            <div className="container-custom">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+                {FEATURES.map((feature, idx) => (
+                  <div 
+                    key={idx} 
+                    className="p-6 sm:p-8 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md dark:hover:shadow-gray-800 transition-all hover:border-gray-300 dark:hover:border-gray-600"
+                  >
+                    <div className="text-5xl mb-5">{feature.icon}</div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
+                    <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{feature.description}</p>
+                  </div>
+                ))}
               </div>
             </div>
+          </section>
 
-            <div className="space-y-4">
-              {questoes.map((questao, index) => {
-                const respostaUsuario = respostas[index];
-                const acertou = respostaUsuario === questao.correta;
+          {/* Ad Space */}
+          <AdSpace type="top" className="my-8" />
 
-                return (
-                  <div key={index} className="border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-white flex-shrink-0 ${
-                          acertou ? 'bg-green-500' : 'bg-red-500'
-                        }`}
+          {showResults ? (
+            <>
+              <AdSpace type="top" className="my-8" />
+              {/* Resultado */}
+              <section className="py-16 sm:py-24 bg-white dark:bg-gray-900">
+                <div className="container-custom">
+                  <div className="max-w-3xl mx-auto">
+                    <div className="text-center mb-12">
+                      <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Resultado do Simulado</h2>
+                      <div className="text-6xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                        {calculateStats().percentual}%
+                      </div>
+                      <p className="text-xl text-gray-600 dark:text-gray-400">
+                        Você acertou {calculateStats().acertos} de {calculateStats().total} questões
+                      </p>
+                    </div>
+
+                    <div className="space-y-6 mb-8">
+                      {questoes.map((questao, index) => {
+                        const acertou = respostas[index] === questao.correta;
+                        return (
+                          <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 dark:bg-gray-800">
+                            <div className={`font-bold mb-2 ${acertou ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                              Q{index + 1} - {acertou ? '✓ Acertou' : '✗ Errou'}
+                            </div>
+                            <p className="text-gray-900 dark:text-white font-medium mb-3">{questao.pergunta}</p>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                              <p>Sua resposta: {respostas[index] || 'Não respondida'}</p>
+                              <p>Resposta correta: {questao.correta}</p>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded text-sm text-gray-700 dark:text-gray-300">
+                              <strong>Explicação:</strong> {questao.explicacao}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex gap-4 justify-center">
+                      <button
+                        onClick={downloadGabarito}
+                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
                       >
-                        {index + 1}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900 mb-4">
-                          {questao.pergunta}
-                        </p>
-
-                        <div className="space-y-2 mb-4">
-                          {Object.entries(questao.opcoes).map(([letra, texto]) => {
-                            const isCorreta = letra === questao.correta;
-                            const isUserAnswer = letra === respostaUsuario;
-
-                            return (
-                              <div
-                                key={letra}
-                                className={`p-3 rounded border ${
-                                  isCorreta
-                                    ? 'bg-green-50 border-green-200'
-                                    : isUserAnswer && !acertou
-                                      ? 'bg-red-50 border-red-200'
-                                      : 'bg-gray-50 border-gray-200'
-                                }`}
-                              >
-                                <span className="font-semibold">{letra}.</span> {texto}
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                          <p className="text-sm font-semibold text-blue-900 mb-2">
-                            Explicação:
-                          </p>
-                          <p className="text-sm text-blue-800">{questao.explicacao}</p>
-                        </div>
-                      </div>
+                        Baixar Gabarito PDF
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowResults(false);
+                          setQuestoes([]);
+                          setRespostas({});
+                          setSelectedCategory(null);
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                      >
+                        Novo Simulado
+                      </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                </div>
+              </section>
+            </>
+          ) : (
+            /* Simulado */
+            <section className="py-16 sm:py-24 bg-white dark:bg-gray-900">
+              <div className="container-custom max-w-3xl">
+                {questoes.length > 0 && (
+                  <>
+                    <div className="mb-8">
+                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Simulado</h2>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(Object.keys(respostas).length / questoes.length) * 100}%` }}
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                        {Object.keys(respostas).length} de {questoes.length} respondidas
+                      </p>
+                    </div>
 
-          <AdSpace type="bottom" className="my-8" />
+                    <div className="space-y-8">
+                      {questoes.map((questao, index) => (
+                        <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 dark:bg-gray-800">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                            Q{index + 1} - {questao.pergunta}
+                          </h3>
+
+                          <div className="space-y-3">
+                            {['A', 'B', 'C', 'D'].map((opcao) => (
+                              <button
+                                key={opcao}
+                                onClick={() => handleResponder(index, opcao)}
+                                className={`w-full text-left p-4 rounded-lg border-2 transition-colors ${
+                                  respostas[index] === opcao
+                                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 dark:border-blue-400'
+                                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                                }`}
+                              >
+                                <span className="font-semibold text-gray-900 dark:text-white">{opcao}.</span> {questao.opcoes[opcao as keyof typeof questao.opcoes]}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-8">
+                      <button
+                        onClick={finalizarSimulado}
+                        disabled={Object.keys(respostas).length < questoes.length}
+                        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-8 py-4 rounded-lg font-semibold transition-colors"
+                      >
+                        Finalizar Simulado
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </section>
+          )}
+
+          <Footer />
         </div>
-
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <Header darkMode={darkMode} onToggleDarkMode={setDarkMode} />
+    <div className={darkMode ? 'dark' : ''}>
+      <div className="min-h-screen bg-white dark:bg-gray-900">
+        <Header darkMode={darkMode} onToggleDarkMode={toggleDarkMode} />
 
-      {/* Hero Section */}
-      <section className="bg-blue-50 py-20">
-        <div className="container-custom text-center">
-          <div className="inline-block mb-8">
-            <span className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium border border-blue-200">
-              <span>⭐</span>
-              Estude de forma inteligente
-            </span>
+        {/* Hero Section */}
+        <section className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-800 dark:to-gray-900 py-20 sm:py-32">
+          <div className="container-custom text-center">
+            <div className="inline-block mb-8">
+              <span className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-medium border border-blue-200 dark:border-blue-800">
+                <span>✨</span>
+                Estude de forma inteligente
+              </span>
+            </div>
+
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-8 leading-tight max-w-4xl mx-auto">
+              Simulados de concurso gerados por Inteligência Artificial
+            </h2>
+
+            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
+              Escolha a matéria, defina a quantidade de questões e pratique com correção e explicações em tempo real. Tudo gratuito.
+            </p>
+
+            <button
+              onClick={() => {
+                if (formRef.current) {
+                  formRef.current.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-block shadow-lg hover:shadow-xl"
+            >
+              Começar Agora
+            </button>
           </div>
+        </section>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-8 leading-tight max-w-4xl mx-auto">
-            Simulados de concurso gerados por Inteligência Artificial
-          </h1>
-
-          <p className="text-lg sm:text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
-            Escolha a matéria, defina a quantidade de questões e pratique com correção e explicações em tempo real. Tudo gratuito.
-          </p>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 sm:py-24 bg-white border-t border-gray-100">
-        <div className="container-custom">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
-            {FEATURES.map((feature, idx) => (
-              <div 
-                key={idx} 
-                className="p-6 sm:p-8 border border-gray-200 rounded-lg hover:shadow-md transition-all hover:border-gray-300"
-              >
-                <div className="text-5xl mb-5">{feature.icon}</div>
-                <h3 className="text-lg font-bold text-gray-900 mb-3">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Publicidade */}
-      <div className="container-custom py-4">
-        <AdSpace type="top" className="my-0" />
-      </div>
-
-      {/* Main Content */}
-      <main className="bg-white">
-        <div className="container-custom py-16 sm:py-24">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Formulário Principal */}
-            <div className="lg:col-span-2">
-              <div ref={formRef}>
-                {/* PASSO 1 */}
-                <div className="mb-12">
-                  <div className="mb-6">
-                    <span className="text-sm font-semibold text-gray-500 uppercase">
-                      Passo 1
-                    </span>
-                    <h2 className="text-2xl font-bold text-gray-900 mt-2">
-                      Escolha uma matéria ou seu conteúdo
-                    </h2>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    {CATEGORIAS.map((categoria) => (
-                      <button
-                        key={categoria.nome}
-                        onClick={() => {
-                          setCategoriaSelecionada(categoria.nome);
-                          setModoEntrada('categoria');
-                          setConteudo('');
-                          setErro('');
-                        }}
-                        className={`p-4 text-left rounded-lg border-2 transition-all ${
-                          categoriaSelecionada === categoria.nome
-                            ? 'border-blue-600 bg-blue-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                        }`}
-                      >
-                        <div className="font-semibold text-gray-900">
-                          {categoria.nome}
-                        </div>
-                        <div className="text-sm text-gray-600 mt-1">
-                          {categoria.descricao}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
+        {/* Features Section */}
+        <section className="py-16 sm:py-24 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
+          <div className="container-custom">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
+              {FEATURES.map((feature, idx) => (
+                <div 
+                  key={idx} 
+                  className="p-6 sm:p-8 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-md dark:hover:shadow-gray-800 transition-all hover:border-gray-300 dark:hover:border-gray-600"
+                >
+                  <div className="text-5xl mb-5">{feature.icon}</div>
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{feature.description}</p>
                 </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                {/* PASSO 2 */}
-                <div className="mb-12">
-                  <div className="mb-6">
-                    <span className="text-sm font-semibold text-gray-500 uppercase">
-                      Passo 2
-                    </span>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-2">
-                      Quantidade de questões
-                    </h3>
-                  </div>
+        {/* Ad Space */}
+        <AdSpace type="top" className="my-8" />
 
-                  <div className="flex flex-wrap gap-3 mb-8">
-                    {[20, 40, 60, 80].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => setQuantidade(num)}
-                        className={`px-6 py-2 rounded-lg font-medium transition-all ${
-                          quantidade === num
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                        }`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
+        {/* Main Form Section */}
+        <section ref={formRef} className="py-16 sm:py-24 bg-white dark:bg-gray-900">
+          <div className="container-custom max-w-3xl">
+            {/* PASSO 1 */}
+            <div className="mb-12">
+              <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">PASSO 1</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8">
+                Escolha uma matéria ou seu conteúdo
+              </h2>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {CATEGORIAS.map((categoria) => (
                   <button
-                    onClick={gerarQuestoes}
-                    disabled={carregando || !categoriaSelecionada}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white px-8 py-3 rounded-lg font-semibold transition-colors"
+                    key={categoria.id}
+                    onClick={() => {
+                      setSelectedCategory(categoria.id);
+                      setError('');
+                    }}
+                    className={`p-4 rounded-lg border-2 text-left transition-all ${
+                      selectedCategory === categoria.id
+                        ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400'
+                        : 'border-gray-300 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-600'
+                    }`}
                   >
-                    {carregando
-                      ? 'Gerando...'
-                      : `Gerar Simulado (${quantidade} questões)`}
-                  </button>
-
-                  {erro && (
-                    <p className="text-red-600 text-sm mt-4">{erro}</p>
-                  )}
-                </div>
-
-                {/* Questões */}
-                {questoes.length > 0 && !mostrarResultado && (
-                  <div className="mb-12">
-                    <div className="mb-8">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-2xl font-bold text-gray-900">
-                          Questão {Object.keys(respostas).length + 1} de {questoes.length}
-                        </h3>
-                        <button
-                          onClick={() => {
-                            setMostrarResultado(true);
-                          }}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                        >
-                          Ver Resultado
-                        </button>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="h-full bg-blue-600 transition-all duration-300"
-                          style={{
-                            width: `${((Object.keys(respostas).length + 1) / questoes.length) * 100}%`,
-                          }}
-                        />
+                    <div className="flex gap-4">
+                      <div className="text-2xl">{categoria.icon}</div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 dark:text-white">{categoria.nome}</h3>
+                        <p className="text-sm text-blue-600 dark:text-blue-400">{categoria.descricao}</p>
                       </div>
                     </div>
-
-                    {questoes.map((questao, index) => (
-                      <div key={index} className={`mb-12 ${index !== 0 ? 'hidden' : ''}`}>
-                        <p className="text-xl font-semibold text-gray-900 mb-6">
-                          {questao.pergunta}
-                        </p>
-
-                        <div className="space-y-3">
-                          {Object.entries(questao.opcoes).map(([letra, texto]) => (
-                            <button
-                              key={letra}
-                              onClick={() => {
-                                setRespostas({ ...respostas, [index]: letra });
-                                if (index < questoes.length - 1) {
-                                  setTimeout(() => {
-                                    const nextQuestao = document.querySelector(
-                                      `[data-questao="${index + 1}"]`
-                                    );
-                                    if (nextQuestao) {
-                                      nextQuestao.scrollIntoView({ behavior: 'smooth' });
-                                    }
-                                  }, 300);
-                                }
-                              }}
-                              className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
-                                respostas[index] === letra
-                                  ? 'border-blue-600 bg-blue-50'
-                                  : 'border-gray-200 bg-white hover:border-gray-300'
-                              }`}
-                            >
-                              <span className="font-semibold">{letra}.</span> {texto}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Sidebar Publicidade */}
-            <div className="lg:col-span-1">
-              <div className="sticky top-24 space-y-8">
-                <AdSpace type="sidebar" className="my-0" />
-                <AdSpace type="sidebar" className="my-0" />
+            {/* PASSO 2 */}
+            <div>
+              <p className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-2">PASSO 2</p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-8">
+                Quantidade de questões
+              </h2>
+
+              <div className="grid grid-cols-4 gap-3 mb-8">
+                {[20, 40, 60, 80].map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => setQuantity(num)}
+                    className={`py-3 rounded-lg font-bold transition-colors ${
+                      quantity === num
+                        ? 'bg-white dark:bg-white text-gray-900 border-2 border-gray-300 dark:border-gray-300'
+                        : 'bg-transparent border-2 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white hover:border-gray-400 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
               </div>
+
+              <button
+                onClick={gerarQuestoes}
+                disabled={!selectedCategory || loading}
+                className="w-full bg-gray-400 hover:bg-gray-500 disabled:opacity-50 text-white py-4 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+              >
+                <span>🚀</span>
+                {loading ? 'Gerando...' : `Gerar Simulado (${quantity} questões)`}
+              </button>
+
+              {error && (
+                <p className="text-center text-orange-600 dark:text-orange-400 mt-4 text-sm">
+                  {error}
+                </p>
+              )}
             </div>
           </div>
-        </div>
-      </main>
+        </section>
 
-      {/* Publicidade Rodapé */}
-      <div className="container-custom py-8">
-        <AdSpace type="bottom" className="my-0" />
+        <Footer />
       </div>
-
-      <Footer />
     </div>
   );
 }
