@@ -72,13 +72,29 @@ const CATEGORIAS = [
     nome: '📖 Pedagogia',
     conteudo: `Pedagogia para concursos públicos:
 
-1. Legislação Educacional: LDB (Lei nº 9.394/96), ECA (Estatuto da Criança e do Adolescente), BNCC (Base Nacional Comum Curricular) e o PNE (Plano Nacional de Educação).
-
-2. Teorias da Aprendizagem: Conhecer os clássicos da educação como Piaget (desenvolvimento), Vygotsky (interacionismo) e Wallon (afetividade).
-
-3. Didática e Organização Escolar: Planejamento participativo, PPP (Projeto Político-Pedagógico), currículo, avaliação formativa e tendências pedagógicas.
-
-4. Educação Inclusiva: Atendimento Educacional Especializado (AEE) e diretrizes para a educação especial, Pilares da Educação.`
+    1. **Legislação Educacional:** LDB (Lei nº 9.394/96), ECA (Estatuto da Criança e do Adolescente), Constituição Federal (arts. 205 a 214), BNCC (Base Nacional Comum Curricular), PNE (Plano Nacional de Educação), Diretrizes Curriculares Nacionais (DCNs), Lei Brasileira de Inclusão (Lei nº 13.146/2015), Leis nº 10.639/2003 e nº 11.645/2008.
+    
+    2. **Teorias da Aprendizagem:** Piaget (desenvolvimento cognitivo), Vygotsky (interacionismo e mediação), Wallon (afetividade e desenvolvimento), Ausubel (aprendizagem significativa), Bruner (aprendizagem por descoberta), Paulo Freire (pedagogia crítica), Emilia Ferreiro e Ana Teberosky (psicogênese da língua escrita).
+    
+    3. **Didática e Organização Escolar:** Planejamento participativo, Projeto Político-Pedagógico (PPP), currículo, planejamento de ensino, planos de aula, avaliação diagnóstica, formativa e somativa, tendências pedagógicas, metodologias ativas, interdisciplinaridade e organização do trabalho pedagógico.
+    
+    4. **Educação Inclusiva:** Atendimento Educacional Especializado (AEE), educação especial na perspectiva inclusiva, acessibilidade, adaptações curriculares, desenho universal para aprendizagem (DUA), tecnologias assistivas, educação inclusiva e os quatro pilares da educação.
+    
+    5. **Fundamentos da Educação:** História da Educação, Filosofia da Educação, Sociologia da Educação, Psicologia da Educação, políticas públicas educacionais e organização da educação brasileira.
+    
+    6. **Alfabetização e Letramento:** Processos de alfabetização, letramento, consciência fonológica, psicogênese da língua escrita, aquisição da leitura e da escrita, métodos de alfabetização e práticas de linguagem.
+    
+    7. **Educação Infantil:** Desenvolvimento infantil, direitos de aprendizagem, campos de experiências, brincadeira e ludicidade, interação, organização dos espaços e tempos, avaliação na Educação Infantil e documentação pedagógica.
+    
+    8. **Gestão Escolar:** Gestão democrática, coordenação pedagógica, supervisão escolar, orientação educacional, liderança pedagógica, conselho escolar, participação da comunidade e gestão participativa.
+    
+    9. **Avaliação Educacional:** Avaliação da aprendizagem, avaliação diagnóstica, formativa e somativa, instrumentos avaliativos, recuperação da aprendizagem, avaliação institucional e avaliações externas.
+    
+    10. **Modalidades de Ensino:** Educação de Jovens e Adultos (EJA), Educação do Campo, Educação Escolar Indígena, Educação Quilombola, Educação Profissional e Tecnológica, Educação Integral e Educação a Distância (EaD).
+    
+    11. **Diversidade, Direitos Humanos e Temas Transversais:** Educação em Direitos Humanos, Educação Ambiental, Educação para as Relações Étnico-Raciais, diversidade cultural, ética, cidadania, cultura da paz e inclusão social.
+    
+    12. **Tecnologias Educacionais:** Tecnologias digitais na educação, ensino híbrido, cultura digital, recursos tecnológicos, mídias educacionais, inteligência artificial na educação e inovação pedagógica.`
   },
   {
     nome: '🏛️ História',
@@ -97,10 +113,6 @@ const CATEGORIAS = [
 6. Brasil República: República Velha, Era Vargas, República Populista, Ditadura Militar.
 
 7. Brasil entre 1961 e 1989: Governos de Jânio Quadros, João Goulart, regime militar (1964-1985), abertura política e constituição de 1988.`
-  },
-  {
-    nome: '✍️ Escrever meu próprio conteúdo',
-    conteudo: null
   }
 ];
 
@@ -139,7 +151,7 @@ export default function Home() {
   const [conteudo, setConteudo] = useState('');
   const [quantidade, setQuantidade] = useState(40);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState('');
-  const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto'>('categoria');
+  const [modoEntrada, setModoEntrada] = useState<'categoria' | 'texto' | 'simulado'>('categoria');
   const [bancaSelecionada, setBancaSelecionada] = useState('📚 Genérica');
   const [carregando, setCarregando] = useState(false);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
@@ -170,7 +182,7 @@ export default function Home() {
   }, [darkMode]);
 
   // ============================================================
-  // FUNÇÃO: GERAR SIMULADO
+  // FUNÇÃO: GERAR SIMULADO NORMAL
   // ============================================================
 
   const handleGerarSimulado = async () => {
@@ -179,11 +191,11 @@ export default function Home() {
     if (modoEntrada === 'categoria') {
       const categoria = CATEGORIAS.find(c => c.nome === categoriaSelecionada);
       if (!categoria || !categoria.conteudo) {
-        setErro('Selecione uma categoria válida ou escolha "Escrever meu próprio conteúdo".');
+        setErro('Selecione uma categoria válida.');
         return;
       }
       textoParaEnviar = categoria.conteudo;
-    } else {
+    } else if (modoEntrada === 'texto') {
       if (!conteudo.trim()) {
         setErro('Digite ou cole o conteúdo programático!');
         return;
@@ -222,6 +234,85 @@ export default function Home() {
       setQuestoes(dados.questoes);
       setRespostas({});
       if (dados.aviso) setAviso(dados.aviso);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // ============================================================
+  // FUNÇÃO: SIMULAR PROVA (10 QUESTÕES DE CADA ÁREA)
+  // ============================================================
+
+  const handleSimularProva = async () => {
+    // Pega as 4 categorias principais (exclui a opção de texto personalizado)
+    const categoriasParaSimulado = CATEGORIAS.filter(c => c.conteudo !== null);
+    
+    if (categoriasParaSimulado.length < 4) {
+      setErro('É necessário ter pelo menos 4 categorias para simular a prova!');
+      return;
+    }
+
+    setCarregando(true);
+    setErro('');
+    setAviso('');
+    setQuestoes([]);
+    setRespostas({});
+    setMostrarResultado(false);
+
+    try {
+      // Para cada categoria, pede 10 questões
+      const todasQuestoes: Questao[] = [];
+      let avisos: string[] = [];
+
+      for (const categoria of categoriasParaSimulado) {
+        const resposta = await fetch('/api/generate-quiz', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conteudo: categoria.conteudo,
+            quantidade: 10,
+            banca: bancaSelecionada
+          })
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          throw new Error(`Erro ao gerar questões de ${categoria.nome}: ${dados.erro || ''}`);
+        }
+
+        if (dados.questoes && dados.questoes.length > 0) {
+          // Adiciona a categoria no início da pergunta para identificação
+          const questoesComCategoria = dados.questoes.map((q: Questao) => ({
+            ...q,
+            pergunta: `[${categoria.nome}] ${q.pergunta}`
+          }));
+          todasQuestoes.push(...questoesComCategoria);
+          
+          if (dados.questoes.length < 10) {
+            avisos.push(`${categoria.nome}: gerou apenas ${dados.questoes.length} questões`);
+          }
+        }
+      }
+
+      // Limita a 40 questões (10 de cada) ou menos se alguma categoria gerou menos
+      const questoesFinais = todasQuestoes.slice(0, 40);
+      
+      if (questoesFinais.length === 0) {
+        throw new Error('Nenhuma questão foi gerada. Tente novamente.');
+      }
+
+      setQuestoes(questoesFinais);
+      setRespostas({});
+      
+      if (avisos.length > 0) {
+        setAviso(`⚠️ ${avisos.join('; ')}. Total: ${questoesFinais.length} questões.`);
+      } else {
+        setAviso(`✅ Prova gerada com sucesso! ${questoesFinais.length} questões (10 de cada área).`);
+      }
+
     } catch (err) {
       setErro(err instanceof Error ? err.message : 'Erro desconhecido');
     } finally {
@@ -277,6 +368,7 @@ export default function Home() {
     setConteudo('');
     setErro('');
     setAviso('');
+    setModoEntrada('categoria');
   };
 
   // ============================================================
@@ -490,6 +582,8 @@ export default function Home() {
     
     if (valor === '✍️ Escrever meu próprio conteúdo') {
       setModoEntrada('texto');
+    } else if (valor === '📝 Simular Prova (10 de cada área)') {
+      setModoEntrada('simulado');
     } else {
       setModoEntrada('categoria');
     }
@@ -552,14 +646,14 @@ export default function Home() {
             ============================================================ */}
         <div className={`${cardBg} ${cardShadow} rounded-2xl p-6 mb-8 transition-colors duration-300`}>
           <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
-            1. Escolha uma categoria, banca e quantidade
+            1. Escolha uma opção
           </h2>
           
           <div className="space-y-4">
             {/* CATEGORIA */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                📂 Selecione uma categoria:
+                📂 Selecione uma opção:
               </label>
               <select
                 value={categoriaSelecionada}
@@ -567,12 +661,13 @@ export default function Home() {
                 className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors duration-300 ${inputBg} text-gray-900 dark:text-gray-100`}
                 disabled={carregando}
               >
-                <option value="">-- Selecione uma categoria --</option>
+                <option value="">-- Selecione uma opção --</option>
                 {CATEGORIAS.map((cat) => (
                   <option key={cat.nome} value={cat.nome}>
                     {cat.nome}
                   </option>
                 ))}
+                <option value="📝 Simular Prova (10 de cada área)">📝 Simular Prova (10 de cada área)</option>
               </select>
             </div>
 
@@ -601,9 +696,19 @@ export default function Home() {
               </div>
             )}
 
-            {/* ============================================================
-                SELETOR DE BANCA - NOVO!
-                ============================================================ */}
+            {/* MENSAGEM DO MODO SIMULADO */}
+            {modoEntrada === 'simulado' && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+                <p className="text-blue-700 dark:text-blue-300 font-semibold">
+                  📝 Modo Prova Completa
+                </p>
+                <p className="text-sm text-blue-600 dark:text-blue-400">
+                  Serão geradas 10 questões de cada área disponível, totalizando 40 questões.
+                </p>
+              </div>
+            )}
+
+            {/* SELETOR DE BANCA */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 🎯 Selecione a banca:
@@ -627,45 +732,65 @@ export default function Home() {
               </div>
             </div>
 
-            {/* QUANTIDADE */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Quantidade de questões:
-              </label>
-              <div className="flex gap-3 flex-wrap">
-                {[20, 40, 60, 80].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => setQuantidade(num)}
-                    className={`px-5 py-2 rounded-xl font-semibold transition-all duration-200 ${
-                      quantidade === num
-                        ? 'bg-blue-600 text-white ring-2 ring-blue-300 dark:ring-blue-500 scale-105'
-                        : `bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300`
-                    }`}
-                    disabled={carregando}
-                  >
-                    {num}
-                  </button>
-                ))}
+            {/* QUANTIDADE (só aparece se não for modo simulado) */}
+            {modoEntrada !== 'simulado' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Quantidade de questões:
+                </label>
+                <div className="flex gap-3 flex-wrap">
+                  {[20, 40, 60, 80].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => setQuantidade(num)}
+                      className={`px-5 py-2 rounded-xl font-semibold transition-all duration-200 ${
+                        quantidade === num
+                          ? 'bg-blue-600 text-white ring-2 ring-blue-300 dark:ring-blue-500 scale-105'
+                          : `bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300`
+                      }`}
+                      disabled={carregando}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* BOTÃO GERAR */}
-            <button
-              onClick={handleGerarSimulado}
-              disabled={carregando || 
-                (modoEntrada === 'categoria' && !categoriaSelecionada) ||
-                (modoEntrada === 'texto' && conteudo.length < 50)}
-              className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-6 py-3.5 rounded-xl text-lg font-semibold transition-all duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600"
-            >
-              {carregando ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin">⏳</span> Gerando {quantidade} questões...
-                </span>
+            {/* BOTÕES */}
+            <div className="flex gap-3">
+              {modoEntrada === 'simulado' ? (
+                <button
+                  onClick={handleSimularProva}
+                  disabled={carregando}
+                  className="w-full bg-green-600 hover:bg-green-700 active:scale-95 text-white px-6 py-3.5 rounded-xl text-lg font-semibold transition-all duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600"
+                >
+                  {carregando ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="animate-spin">⏳</span> Gerando prova completa...
+                    </span>
+                  ) : (
+                    `📝 Simular Prova (10 de cada área) - ${bancaSelecionada}`
+                  )}
+                </button>
               ) : (
-                `🚀 Gerar Simulado (${quantidade} questões - ${bancaSelecionada})`
+                <button
+                  onClick={handleGerarSimulado}
+                  disabled={carregando || 
+                    (modoEntrada === 'categoria' && !categoriaSelecionada) ||
+                    (modoEntrada === 'texto' && conteudo.length < 50)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-6 py-3.5 rounded-xl text-lg font-semibold transition-all duration-200 disabled:bg-gray-400 dark:disabled:bg-gray-600"
+                >
+                  {carregando ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="animate-spin">⏳</span> Gerando {quantidade} questões...
+                    </span>
+                  ) : (
+                    `🚀 Gerar Simulado (${quantidade} questões - ${bancaSelecionada})`
+                  )}
+                </button>
               )}
-            </button>
+            </div>
 
             {erro && (
               <div className="p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-700 text-red-700 dark:text-red-300 rounded-xl">
@@ -673,8 +798,12 @@ export default function Home() {
               </div>
             )}
             {aviso && (
-              <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300 rounded-xl">
-                ⚠️ {aviso}
+              <div className={`p-3 rounded-xl ${
+                aviso.includes('✅') 
+                  ? 'bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-700 text-green-700 dark:text-green-300'
+                  : 'bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-400 dark:border-yellow-700 text-yellow-700 dark:text-yellow-300'
+              }`}>
+                {aviso}
               </div>
             )}
           </div>
