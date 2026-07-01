@@ -1,7 +1,5 @@
 /* app/globals.css */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* ===== ANIMAÇÕES ===== */
 @keyframes fade-in {
@@ -19,7 +17,7 @@
   animation: fade-in 0.5s ease-out forwards;
 }
 
-/* ===== SCROLLBAR PERSONALIZADA ===== */
+/* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -39,25 +37,20 @@
   background: #555;
 }
 
-/* ===== DARK MODE SCROLLBAR ===== */
-.dark ::-webkit-scrollbar-track {
+/* ===== DARK MODE ===== */
+html.dark ::-webkit-scrollbar-track {
   background: #1a1a2e;
 }
 
-.dark ::-webkit-scrollbar-thumb {
+html.dark ::-webkit-scrollbar-thumb {
   background: #4a4a6a;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
+html.dark ::-webkit-scrollbar-thumb:hover {
   background: #6a6a8a;
 }
 
-/* ===== SELECT DARK MODE ===== */
-.dark select {
-  color-scheme: dark;
-}
-
-/* ===== INPUT DARK MODE ===== */
-.dark input[type="file"] {
+html.dark select,
+html.dark input[type="file"] {
   color-scheme: dark;
 }
