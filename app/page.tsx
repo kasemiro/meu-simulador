@@ -65,6 +65,23 @@ const CATEGORIAS = [
   }
 ];
 
+const FEATURES = [
+  {
+    icon: '🤖',
+    title: 'Gerado por IA',
+    description: 'Questões inéditas criadas sob medida para o seu estudo.'
+  },
+  {
+    icon: '🎯',
+    title: 'Foco no concurso',
+    description: 'Matérias mais cobradas nas principais provas do país.'
+  },
+  {
+    icon: '⚡',
+    title: 'Correção Instantânea',
+    description: 'Veja a resposta certa e a explicação a cada questão.'
+  }
+];
 
 export default function Home() {
   const [conteudo, setConteudo] = useState('');
