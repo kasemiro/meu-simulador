@@ -66,15 +66,7 @@ const CATEGORIAS = [
 ];
 
 const FEATURES = [
-  {
-  
-  },
-  {
 
-  },
-  {
-
-  }
 ];
 
 export default function Home() {
