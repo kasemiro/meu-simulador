@@ -100,19 +100,29 @@ const CATEGORIAS = [
     nome: '🏛️ História',
     conteudo: `História para concursos públicos:
 
-1. A Pré-História: Conceito e períodos da Pré-História.
+    1. **História do Brasil Colonial:** Descobrimento, colonização, capitanias hereditárias, governo-geral, economia açucareira, mineração, escravidão, invasões estrangeiras, bandeirismo e movimentos nativistas.
 
-2. A Idade Média: Feudalismo: estrutura social e econômica.
-
-3. Revoluções do Século XIX: A Revolução Industrial e suas consequências.
-
-4. Era Pós-Guerra e Descolonização: Reconstrução pós-Segunda Guerra Mundial.
-
-5. Brasil Império: Primeiro Reinado, Período Regencial, Segundo Reinado, Abolição da Escravatura e Proclamação da República.
-
-6. Brasil República: República Velha, Era Vargas, República Populista, Ditadura Militar.
-
-7. Brasil entre 1961 e 1989: Governos de Jânio Quadros, João Goulart, regime militar (1964-1985), abertura política e constituição de 1988.`
+    2. **Brasil Império:** Independência do Brasil, Primeiro Reinado, Período Regencial, Segundo Reinado, economia cafeeira, Guerra do Paraguai, movimento abolicionista e Proclamação da República.
+    
+    3. **Brasil República:** República Velha, Era Vargas, Constituição de 1934, Estado Novo, redemocratização, Regime Militar (1964–1985), Constituição de 1988 e Nova República.
+    
+    4. **Movimentos Sociais e Revoltas:** Inconfidência Mineira, Conjuração Baiana, Revolução Pernambucana, Revolta da Vacina, Revolta da Chibata, Guerra de Canudos, Guerra do Contestado, Coluna Prestes e Diretas Já.
+    
+    5. **História Econômica do Brasil:** Ciclos econômicos (pau-brasil, açúcar, ouro, café, borracha), industrialização, urbanização e desenvolvimento econômico.
+    
+    6. **História Antiga:** Civilizações do Egito, Mesopotâmia, Grécia e Roma; principais características políticas, sociais, econômicas e culturais.
+    
+    7. **História Medieval:** Feudalismo, Igreja Medieval, Cruzadas, Renascimento Comercial e Urbano e formação das monarquias nacionais.
+    
+    8. **História da Idade Moderna:** Renascimento Cultural, Reformas Religiosas, Absolutismo, Mercantilismo, Grandes Navegações e Iluminismo.
+    
+    9. **Revoluções Contemporâneas:** Revolução Inglesa, Independência dos Estados Unidos, Revolução Francesa, Revolução Industrial e Revoluções Liberais.
+    
+    10. **História Contemporânea:** Imperialismo, Primeira Guerra Mundial, Revolução Russa, Crise de 1929, Segunda Guerra Mundial, Guerra Fria, descolonização da África e da Ásia e globalização.
+    
+    11. **História Política Brasileira Contemporânea:** Constituição Federal de 1988, redemocratização, cidadania, direitos fundamentais e organização do Estado brasileiro.
+    
+    12. **Patrimônio Histórico e Cultural:** Formação da identidade brasileira, patrimônio material e imaterial, diversidade cultural e memória histórica.`
   }
 ];
 
