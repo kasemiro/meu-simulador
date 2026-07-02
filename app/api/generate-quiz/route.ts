@@ -2,13 +2,17 @@
 import { NextResponse } from 'next/server';
 
 // ============================================================
-// CONFIGURAÇÕES DE SEGURANÇA - SEM CORS
+// CONFIGURAÇÕES
 // ============================================================
 
 const CONFIG = {
   MAX_CONTENT_LENGTH: 10000,
   MIN_CONTENT_LENGTH: 50,
   MAX_QUESTIONS: 80,
+  ALLOWED_ORIGINS: [
+    'http://localhost:3000',
+    'https://meu-simulador-pink.vercel.app',
+  ],
 };
 
 // ============================================================
@@ -137,7 +141,14 @@ export async function POST(request: Request) {
   
   try {
     // ============================================================
-    // 1. VALIDAR CORPO DA REQUISIÇÃO
+    // 1. LOG DA REQUISIÇÃO
+    // ============================================================
+    
+    const origin = request.headers.get('origin') || 'sem-origin';
+    console.log(`🔍 Origem: ${origin}`);
+    
+    // ============================================================
+    // 2. VALIDAR CORPO DA REQUISIÇÃO
     // ============================================================
     
     let body;
@@ -156,7 +167,7 @@ export async function POST(request: Request) {
     console.log('🎯 Banca:', banca);
     
     // ============================================================
-    // 2. VALIDAR CONTEÚDO
+    // 3. VALIDAR CONTEÚDO
     // ============================================================
     
     const validacao = validarConteudo(conteudo);
@@ -165,7 +176,7 @@ export async function POST(request: Request) {
     }
 
     // ============================================================
-    // 3. VERIFICAR API KEY
+    // 4. VERIFICAR API KEY
     // ============================================================
     
     const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -178,7 +189,7 @@ export async function POST(request: Request) {
     }
 
     // ============================================================
-    // 4. GERAR PROMPT E CHAMAR API
+    // 5. GERAR PROMPT E CHAMAR API
     // ============================================================
     
     const promptBase = getPromptPorBanca(banca, quantidade);
@@ -188,7 +199,7 @@ export async function POST(request: Request) {
     console.log('📤 Enviando para DeepSeek...');
 
     // ============================================================
-    // 5. CHAMAR API DEEPSEEK
+    // 6. CHAMAR API DEEPSEEK
     // ============================================================
     
     try {
@@ -228,7 +239,7 @@ export async function POST(request: Request) {
       console.log('📄 Resposta recebida');
 
       // ============================================================
-      // 6. EXTRAIR JSON
+      // 7. EXTRAIR JSON
       // ============================================================
       
       let jsonStr = conteudoGerado
@@ -243,7 +254,7 @@ export async function POST(request: Request) {
       }
 
       // ============================================================
-      // 7. TENTA PARSEAR
+      // 8. TENTA PARSEAR
       // ============================================================
       
       let questoes = [];
@@ -273,7 +284,7 @@ export async function POST(request: Request) {
       }
 
       // ============================================================
-      // 8. VALIDA AS QUESTÕES
+      // 9. VALIDA AS QUESTÕES
       // ============================================================
       
       const questoesValidas = questoes.filter((q: any) => {
@@ -300,7 +311,7 @@ export async function POST(request: Request) {
       }
 
       // ============================================================
-      // 9. RETORNA
+      // 10. RETORNA
       // ============================================================
       
       const questoesFinais = questoesValidas.slice(0, quantidade);
@@ -313,12 +324,31 @@ export async function POST(request: Request) {
       const endTime = Date.now();
       console.log(`✅ SUCESSO! ${questoesFinais.length} questões em ${(endTime - startTime) / 1000}s`);
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         sucesso: true,
         questoes: questoesFinais,
         total: questoesFinais.length,
         aviso: aviso || undefined
       });
+
+      // ============================================================
+      // 11. HEADERS CORS - PERMITE A URL CORRETA
+      // ============================================================
+      
+      const originHeader = request.headers.get('origin') || '';
+      
+      // Permite a URL correta
+      if (CONFIG.ALLOWED_ORIGINS.includes(originHeader)) {
+        response.headers.set('Access-Control-Allow-Origin', originHeader);
+      } else {
+        // Fallback: permite todas (para desenvolvimento)
+        response.headers.set('Access-Control-Allow-Origin', '*');
+      }
+      
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+
+      return response;
 
     } catch (erro) {
       console.error('❌ Erro na comunicação com DeepSeek:', erro);
