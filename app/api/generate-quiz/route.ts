@@ -2,39 +2,14 @@
 import { NextResponse } from 'next/server';
 
 // ============================================================
-// CONFIGURAÇÕES DE SEGURANÇA
+// CONFIGURAÇÕES DE SEGURANÇA - SEM CORS
 // ============================================================
 
 const CONFIG = {
   MAX_CONTENT_LENGTH: 10000,
   MIN_CONTENT_LENGTH: 50,
   MAX_QUESTIONS: 80,
-  ALLOWED_ORIGINS: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://meu-simulador.vercel.app',
-    'https://meu-simulador-git-main-kz-quizz.vercel.app',
-  ],
 };
-
-// ============================================================
-// FUNÇÃO: VERIFICAR ORIGEM (CORRIGIDA)
-// ============================================================
-
-function isOriginAllowed(origin: string | null): boolean {
-  // Se não houver origin, permitir (chamada interna)
-  if (!origin) {
-    return true;
-  }
-  
-  // Permitir localhost em qualquer porta (desenvolvimento)
-  if (origin.match(/^http:\/\/localhost:\d+$/)) {
-    return true;
-  }
-  
-  // Permitir origens configuradas
-  return CONFIG.ALLOWED_ORIGINS.some(allowed => origin.includes(allowed) || allowed.includes(origin));
-}
 
 // ============================================================
 // FUNÇÃO: VALIDAR CONTEÚDO
@@ -162,52 +137,13 @@ export async function POST(request: Request) {
   
   try {
     // ============================================================
-    // 1. VERIFICAR ORIGEM DA REQUISIÇÃO (CORS) - CORRIGIDO
-    // ============================================================
-    
-    const origin = request.headers.get('origin');
-    console.log(`🔍 Origem da requisição: ${origin || 'Desconhecida'}`);
-    
-    // Nova verificação mais permissiva
-    if (origin) {
-      // Verifica se a origem é permitida
-      const isAllowed = isOriginAllowed(origin);
-      console.log(`🔍 Origem permitida? ${isAllowed ? '✅ SIM' : '❌ NÃO'}`);
-      
-      if (!isAllowed) {
-        console.log(`🚫 Origem bloqueada: ${origin}`);
-        return NextResponse.json({
-          erro: 'Origem não autorizada.'
-        }, { status: 403 });
-      }
-    } else {
-      // Se não houver origin (chamada interna), permitir
-      console.log('✅ Origem não definida, permitindo (chamada interna)');
-    }
-    
-    console.log('✅ Origem autorizada');
-
-    // ============================================================
-    // 2. VERIFICAR TAMANHO DA REQUISIÇÃO
-    // ============================================================
-    
-    const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > 1000000) {
-      console.log(`🚫 Requisição muito grande: ${contentLength} bytes`);
-      return NextResponse.json({
-        erro: 'Requisição muito grande. Máximo de 1MB.'
-      }, { status: 413 });
-    }
-
-    // ============================================================
-    // 3. VALIDAR CORPO DA REQUISIÇÃO
+    // 1. VALIDAR CORPO DA REQUISIÇÃO
     // ============================================================
     
     let body;
     try {
       body = await request.json();
     } catch (erro) {
-      console.log('🚫 Erro ao ler corpo da requisição');
       return NextResponse.json({ erro: 'Requisição inválida.' }, { status: 400 });
     }
     
@@ -220,7 +156,7 @@ export async function POST(request: Request) {
     console.log('🎯 Banca:', banca);
     
     // ============================================================
-    // 4. VALIDAR CONTEÚDO
+    // 2. VALIDAR CONTEÚDO
     // ============================================================
     
     const validacao = validarConteudo(conteudo);
@@ -229,7 +165,7 @@ export async function POST(request: Request) {
     }
 
     // ============================================================
-    // 5. VERIFICAR API KEY
+    // 3. VERIFICAR API KEY
     // ============================================================
     
     const apiKey = process.env.DEEPSEEK_API_KEY;
@@ -240,11 +176,9 @@ export async function POST(request: Request) {
         erro: 'Chave da API não configurada.' 
       }, { status: 500 });
     }
-    
-    console.log('🔑 API Key presente: ✅');
 
     // ============================================================
-    // 6. GERAR PROMPT E CHAMAR API
+    // 4. GERAR PROMPT E CHAMAR API
     // ============================================================
     
     const promptBase = getPromptPorBanca(banca, quantidade);
@@ -254,7 +188,7 @@ export async function POST(request: Request) {
     console.log('📤 Enviando para DeepSeek...');
 
     // ============================================================
-    // 7. CHAMAR API DEEPSEEK
+    // 5. CHAMAR API DEEPSEEK
     // ============================================================
     
     try {
@@ -291,11 +225,10 @@ export async function POST(request: Request) {
       const dadosIA = await respostaIA.json();
       let conteudoGerado = dadosIA.choices[0].message.content;
       
-      console.log('📄 Resposta recebida (primeiros 500 caracteres):');
-      console.log(conteudoGerado.substring(0, 500));
+      console.log('📄 Resposta recebida');
 
       // ============================================================
-      // 8. EXTRAIR JSON
+      // 6. EXTRAIR JSON
       // ============================================================
       
       let jsonStr = conteudoGerado
@@ -310,7 +243,7 @@ export async function POST(request: Request) {
       }
 
       // ============================================================
-      // 9. TENTA PARSEAR
+      // 7. TENTA PARSEAR
       // ============================================================
       
       let questoes = [];
@@ -340,7 +273,7 @@ export async function POST(request: Request) {
       }
 
       // ============================================================
-      // 10. VALIDA AS QUESTÕES
+      // 8. VALIDA AS QUESTÕES
       // ============================================================
       
       const questoesValidas = questoes.filter((q: any) => {
@@ -367,7 +300,7 @@ export async function POST(request: Request) {
       }
 
       // ============================================================
-      // 11. RETORNA
+      // 9. RETORNA
       // ============================================================
       
       const questoesFinais = questoesValidas.slice(0, quantidade);
