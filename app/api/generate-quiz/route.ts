@@ -18,21 +18,22 @@ const CONFIG = {
 };
 
 // ============================================================
-// FUNÇÃO: VERIFICAR ORIGEM
+// FUNÇÃO: VERIFICAR ORIGEM (CORRIGIDA)
 // ============================================================
 
 function isOriginAllowed(origin: string | null): boolean {
+  // Se não houver origin, permitir (chamada interna)
   if (!origin) {
-    // Se não houver origin, verifica se é uma chamada interna
     return true;
   }
   
-  // Permitir localhost em qualquer porta (para desenvolvimento)
+  // Permitir localhost em qualquer porta (desenvolvimento)
   if (origin.match(/^http:\/\/localhost:\d+$/)) {
     return true;
   }
   
-  return CONFIG.ALLOWED_ORIGINS.includes(origin);
+  // Permitir origens configuradas
+  return CONFIG.ALLOWED_ORIGINS.some(allowed => origin.includes(allowed) || allowed.includes(origin));
 }
 
 // ============================================================
@@ -161,19 +162,27 @@ export async function POST(request: Request) {
   
   try {
     // ============================================================
-    // 1. VERIFICAR ORIGEM DA REQUISIÇÃO (CORS)
+    // 1. VERIFICAR ORIGEM DA REQUISIÇÃO (CORS) - CORRIGIDO
     // ============================================================
     
     const origin = request.headers.get('origin');
     console.log(`🔍 Origem da requisição: ${origin || 'Desconhecida'}`);
     
-    // Chamadas internas (sem origin) são permitidas
-    // Isso resolve o problema do Simular Prova
-    if (origin && !isOriginAllowed(origin)) {
-      console.log(`🚫 Origem bloqueada: ${origin}`);
-      return NextResponse.json({
-        erro: 'Origem não autorizada.'
-      }, { status: 403 });
+    // Nova verificação mais permissiva
+    if (origin) {
+      // Verifica se a origem é permitida
+      const isAllowed = isOriginAllowed(origin);
+      console.log(`🔍 Origem permitida? ${isAllowed ? '✅ SIM' : '❌ NÃO'}`);
+      
+      if (!isAllowed) {
+        console.log(`🚫 Origem bloqueada: ${origin}`);
+        return NextResponse.json({
+          erro: 'Origem não autorizada.'
+        }, { status: 403 });
+      }
+    } else {
+      // Se não houver origin (chamada interna), permitir
+      console.log('✅ Origem não definida, permitindo (chamada interna)');
     }
     
     console.log('✅ Origem autorizada');
