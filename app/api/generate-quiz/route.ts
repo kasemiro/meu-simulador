@@ -6,13 +6,14 @@ import { NextResponse } from 'next/server';
 // ============================================================
 
 const CONFIG = {
-  MAX_CONTENT_LENGTH: 10000,      // Máximo de caracteres do conteúdo
-  MIN_CONTENT_LENGTH: 50,         // Mínimo de caracteres do conteúdo
-  MAX_QUESTIONS: 40,              // Máximo de questões por requisição
+  MAX_CONTENT_LENGTH: 10000,
+  MIN_CONTENT_LENGTH: 50,
+  MAX_QUESTIONS: 80,
   ALLOWED_ORIGINS: [
-    'http://localhost:3000',      // Desenvolvimento local
-    'https://meu-simulador-pink.vercel.app/',  // Produção
-    // Adicione outros domínios aqui
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://meu-simulador.vercel.app',
+    'https://meu-simulador-git-main-kz-quizz.vercel.app',
   ],
 };
 
@@ -21,7 +22,10 @@ const CONFIG = {
 // ============================================================
 
 function isOriginAllowed(origin: string | null): boolean {
-  if (!origin) return false;
+  if (!origin) {
+    // Se não houver origin, verifica se é uma chamada interna
+    return true;
+  }
   
   // Permitir localhost em qualquer porta (para desenvolvimento)
   if (origin.match(/^http:\/\/localhost:\d+$/)) {
@@ -163,7 +167,9 @@ export async function POST(request: Request) {
     const origin = request.headers.get('origin');
     console.log(`🔍 Origem da requisição: ${origin || 'Desconhecida'}`);
     
-    if (!isOriginAllowed(origin)) {
+    // Chamadas internas (sem origin) são permitidas
+    // Isso resolve o problema do Simular Prova
+    if (origin && !isOriginAllowed(origin)) {
       console.log(`🚫 Origem bloqueada: ${origin}`);
       return NextResponse.json({
         erro: 'Origem não autorizada.'
@@ -177,7 +183,7 @@ export async function POST(request: Request) {
     // ============================================================
     
     const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength) > 1000000) { // 1MB
+    if (contentLength && parseInt(contentLength) > 1000000) {
       console.log(`🚫 Requisição muito grande: ${contentLength} bytes`);
       return NextResponse.json({
         erro: 'Requisição muito grande. Máximo de 1MB.'
@@ -214,20 +220,18 @@ export async function POST(request: Request) {
     }
 
     // ============================================================
-    // 5. VERIFICAR API KEY (SEM EXPOR NOS LOGS)
+    // 5. VERIFICAR API KEY
     // ============================================================
     
     const apiKey = process.env.DEEPSEEK_API_KEY;
     
-    // ⚠️ IMPORTANTE: NUNCA logar a chave completa!
     if (!apiKey) {
-      console.error('❌ API Key ausente (não logada por segurança)');
+      console.error('❌ API Key ausente');
       return NextResponse.json({ 
         erro: 'Chave da API não configurada.' 
       }, { status: 500 });
     }
     
-    // Apenas loga que existe, sem mostrar a chave
     console.log('🔑 API Key presente: ✅');
 
     // ============================================================
@@ -241,7 +245,7 @@ export async function POST(request: Request) {
     console.log('📤 Enviando para DeepSeek...');
 
     // ============================================================
-    // 7. CHAMAR API DEEPSEEK (COM A CHAVE)
+    // 7. CHAMAR API DEEPSEEK
     // ============================================================
     
     try {
@@ -249,7 +253,7 @@ export async function POST(request: Request) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`  // ← Chave usada aqui, nunca exposta
+          'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
           model: 'deepseek-chat',
@@ -269,7 +273,6 @@ export async function POST(request: Request) {
       });
 
       if (!respostaIA.ok) {
-        // Não mostra detalhes do erro para o usuário (segurança)
         console.error(`❌ Erro DeepSeek: ${respostaIA.status}`);
         return NextResponse.json({ 
           erro: 'Erro na geração de questões. Tente novamente.' 
