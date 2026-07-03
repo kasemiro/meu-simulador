@@ -473,7 +473,7 @@ export default function Home() {
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
                 Simulador de Estudos
               </h1>
-              <span className={`text-xs ${textMutedClass}`}>com IA</span>
+              <span className={`text-xs ${textMutedClass}`}>Kasemiro.com</span>
             </div>
           </div>
 
@@ -490,35 +490,63 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         
         {/* ============================================================
-            PASSO 1 - MATÉRIA
+            PASSO 1 - MATÉRIA E BANCA (DUAS COLUNAS)
             ============================================================ */}
-        <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-4">
-            PASSO 1
-          </p>
-          <h2 className="text-2xl font-bold mb-4">
-            Escolha uma matéria ou seu conteúdo
-          </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {CATEGORIAS.map((cat) => (
-              <button
-                key={cat.nome}
-                onClick={() => handleCategoriaClick(cat.nome)}
-                className={`p-4 rounded-xl text-left transition-all duration-200 ${
-                  categoriaSelecionada === cat.nome
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-105'
-                    : `${cardBg} ${shadowClass} hover:scale-105 hover:shadow-xl`
-                }`}
-              >
-                <div className="text-2xl mb-1">{cat.icone}</div>
-                <div className="font-semibold text-sm">{cat.nome}</div>
-                <div className={`text-xs ${categoriaSelecionada === cat.nome ? 'text-blue-100' : textMutedClass}`}>
-                  {cat.descricao}
-                </div>
-              </button>
-            ))}
+          {/* ===== COLUNA ESQUERDA - CONTEÚDO ===== */}
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-4">
+              PASSO 1
+            </p>
+            <h2 className="text-2xl font-bold mb-4">
+              Escolha uma matéria
+            </h2>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {CATEGORIAS.map((cat) => (
+                <button
+                  key={cat.nome}
+                  onClick={() => handleCategoriaClick(cat.nome)}
+                  className={`p-4 rounded-xl text-center transition-all duration-200 ${
+                    categoriaSelecionada === cat.nome
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-105'
+                      : `${cardBg} ${shadowClass} hover:scale-105 hover:shadow-xl`
+                  }`}
+                >
+                  <div className="text-2xl mb-1">{cat.icone}</div>
+                  <div className="font-semibold text-sm">{cat.nome}</div>
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* ===== COLUNA DIREITA - BANCA ===== */}
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-4">
+              PASSO 1
+            </p>
+            <h2 className="text-2xl font-bold mb-4">
+              Escolha a banca
+            </h2>
+            
+            <div className="flex flex-wrap gap-2">
+              {BANCAS.map((b) => (
+                <button
+                  key={b.nome}
+                  onClick={() => setBancaSelecionada(b.nome)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    bancaSelecionada === b.nome
+                      ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                      : `${cardBg} ${borderClass} hover:bg-gray-100 dark:hover:bg-gray-700`
+                  }`}
+                >
+                  {b.nome}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
 
         {/* ============================================================
@@ -547,30 +575,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        {/* ============================================================
-            BANCA
-            ============================================================ */}
-        <div className="mb-8">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
-            Banca (opcional):
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {BANCAS.map((b) => (
-              <button
-                key={b.nome}
-                onClick={() => setBancaSelecionada(b.nome)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                  bancaSelecionada === b.nome
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
-                    : `${cardBg} ${borderClass} hover:bg-gray-100 dark:hover:bg-gray-700`
-                }`}
-              >
-                {b.nome}
-              </button>
-            ))}
-          </div>
-        </div>
 
         {/* ============================================================
             PASSO 2 - QUANTIDADE
