@@ -259,12 +259,12 @@ export default function Home() {
       
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Simulador de Concurso Público', pageWidth / 2, y, { align: 'center' });
+      pdf.text('Simulador de Estudos', pageWidth / 2, y, { align: 'center' });
       y += 8;
       
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Gerado por IA com DeepSeek', pageWidth / 2, y, { align: 'center' });
+      pdf.text('Gerado por IA com KASEMIRO.COM', pageWidth / 2, y, { align: 'center' });
       y += 10;
       
       pdf.setDrawColor(200, 200, 200);
@@ -404,7 +404,7 @@ export default function Home() {
         pdf.setFont('helvetica', 'italic');
         pdf.setTextColor(150, 150, 150);
         pdf.text(
-          `Gerado com DeepSeek AI - Página ${i} de ${totalPages}`,
+          `Gerado com AI - Página ${i} de ${totalPages}`,
           pageWidth / 2,
           pageHeight - 10,
           { align: 'center' }
@@ -471,7 +471,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">
-                Simulador de Concurso
+                Simulador de Estudos
               </h1>
               <span className={`text-xs ${textMutedClass}`}>com IA</span>
             </div>
