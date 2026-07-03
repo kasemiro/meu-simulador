@@ -490,12 +490,12 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         
         {/* ============================================================
-            PASSO 1 - MATÉRIA E BANCA (DUAS COLUNAS)
+            PASSO 1 - MATÉRIA (70%) E BANCA (30%) EM DUAS COLUNAS
             ============================================================ */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-10 gap-6 mb-8">
           
-          {/* ===== COLUNA ESQUERDA - CONTEÚDO ===== */}
-          <div>
+          {/* ===== COLUNA ESQUERDA - CONTEÚDO (70%) ===== */}
+          <div className="md:col-span-7">
             <p className="text-sm font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400 mb-4">
               PASSO 1
             </p>
@@ -503,7 +503,7 @@ export default function Home() {
               Escolha uma matéria
             </h2>
             
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {CATEGORIAS.map((cat) => (
                 <button
                   key={cat.nome}
@@ -521,8 +521,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ===== COLUNA DIREITA - BANCA ===== */}
-          <div>
+          {/* ===== COLUNA DIREITA - BANCA (30%) ===== */}
+          <div className="md:col-span-3">
             <p className="text-sm font-semibold uppercase tracking-wider text-purple-600 dark:text-purple-400 mb-4">
               PASSO 1
             </p>
