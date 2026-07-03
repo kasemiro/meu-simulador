@@ -404,7 +404,7 @@ export default function Home() {
         pdf.setFont('helvetica', 'italic');
         pdf.setTextColor(150, 150, 150);
         pdf.text(
-          `Gerado com AI - Página ${i} de ${totalPages}`,
+          `Por Kasemiro.Com - Página ${i} de ${totalPages}`,
           pageWidth / 2,
           pageHeight - 10,
           { align: 'center' }
